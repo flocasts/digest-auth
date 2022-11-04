@@ -76,32 +76,40 @@ export default class AxiosDigest {
 	}
 
 	public async sendRequest<T>(method: Method, url: string, config?: AxiosRequestConfig): Promise<T> {
-		config = {
+		const conf = {
 			method,
 			url,
 			...(this.defaultOptions.baseUrl && { baseURL: this.defaultOptions.baseUrl }),
 			...config,
 		};
 
-		const observable: Observable<T> = defer(() => this.axios.request<{ data: T }>(config)).pipe(
-			this.options.retry && retry(10),
-			map((axiosResponse: AxiosResponse<{ data: T }>) => {
-				return axiosResponse.data.data;
-			}),
-		);
+		let observable: Observable<T>;
+		if (this.options.retry) {
+			observable = defer(() => this.axios.request<{ data: T }>(conf)).pipe(
+				retry(this.options.retry_times),
+				map((res: AxiosResponse<{ data: T }>) => {
+					return res.data.data;
+				}),
+			);
+		} else {
+			observable = defer(() => this.axios.request<{ data: T }>(conf)).pipe(
+				map((res: AxiosResponse<{ data: T }>) => {
+					return res.data.data;
+				}),
+			);
+		}
 
-		let axiosRes: T;
 		try {
-			axiosRes = await firstValueFrom(observable);
+			return await firstValueFrom(observable);
 		} catch (e: any) {
 			const err = e as AxiosError;
 			if (err.isAxiosError && err.response?.status === 401) {
 				const authHeader: string = err.response.headers['www-authenticate'];
-				const newConfig = this.getAuthHeadersConfig(authHeader, method, url, config);
-				return await this.sendRequest<T>(method, url, newConfig);
+				const newConfig = this.getAuthHeadersConfig(authHeader, method, url, conf);
+				return await this.axios.request(newConfig);
 			}
+			throw e;
 		}
-		return axiosRes;
 	}
 
 	private getAuthHeadersConfig(

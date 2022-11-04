@@ -12,7 +12,7 @@ This repo exists because the axios library does not support digest authenticatio
 import axios from 'axios';
 import DigestAuth from '@flocasts/flo-axios-digest';
 
-const axiosDigest = new DigestAuth('<username>', '<passwd>', axios.create());
+const axiosDigest = new DigestAuth('<username>', '<passwd>', <axios | axios.create()>);
 
 const result = await axiosDigest.get('http://localhost:3000/test');
 ```

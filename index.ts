@@ -215,6 +215,7 @@ export default class AxiosDigest {
 					if (error.status !== 401) {
 						// we could (should?) add other http status codes
 						// that are excluded from retrying, i.e. 429: too many requests
+						// we could also extend the options to take a number[] of http status codes we exclude
 
 						if (this.options.retry && retryAttempt < this.options.retryAttempts) {
 							// should the retry multiplier be configurable?

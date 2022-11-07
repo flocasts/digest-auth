@@ -33,6 +33,7 @@ export default class AxiosDigest {
 	private readonly username: string;
 	private readonly passwd: string;
 	private readonly options: Options;
+	private hasRetried401: boolean;
 
 	private readonly defaultOptions: Options = {
 		retry: true,
@@ -221,11 +222,12 @@ export default class AxiosDigest {
 							// should the retry multiplier be configurable?
 							return timer(retryAttempt * 1000);
 						}
-					} else if (i === 0) {
+					} else if (i === 0 && !this.hasRetried401) {
 						// only retry 401 once to get new authHeader,
 						// 401 after the first time likely means incorrect username/passwrd
 						const authHeader: string = error.response.headers['www-authenticate'];
 						const newConfig = this.getAuthHeadersConfig(authHeader, method, url, config);
+						this.hasRetried401 = true;
 						return this.sendRequest(method, url, newConfig);
 					}
 					// just throw the http error in the end

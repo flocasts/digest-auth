@@ -208,20 +208,21 @@ export default class AxiosDigest {
 					const retryAttempt = i + 1;
 
 					if (error.status !== 401) {
+						// we could (should?) add other http status codes
+						// that are excluded from retrying, i.e. 429: too many requests
+
 						// retry if we do retries
 						if (this.options.retry && retryAttempt < this.options.retry_times) {
 							return timer(retryAttempt * 1000);
 						}
-					} else {
+					} else if (i === 0) {
 						// only retry 401 once to get new authHeader,
 						// 401 after the first time likely means incorrect username/passwrd
-						if (i === 0) {
-							// get new authHeader and re-request
-							const authHeader: string = error.response.headers['www-authenticate'];
-							const newConfig = this.getAuthHeadersConfig(authHeader, method, url, config);
-							return this.sendRequest(method, url, newConfig);
-						}
+						const authHeader: string = error.response.headers['www-authenticate'];
+						const newConfig = this.getAuthHeadersConfig(authHeader, method, url, config);
+						return this.sendRequest(method, url, newConfig);
 					}
+					// just throw the http error in the end
 					return throwError(() => error);
 				}),
 			);

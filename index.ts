@@ -84,6 +84,8 @@ export default class AxiosDigest {
 		};
 
 		let observable: Observable<T>;
+		// These retries should only happen if it's not a 401,
+		// if it's a 401 we need to retry AFTER building the auth-headers
 		if (this.options.retry) {
 			observable = defer(() => this.axios.request<{ data: T }>(conf)).pipe(
 				retry(this.options.retry_times),

@@ -51,7 +51,6 @@ export default class AxiosDigest {
 		this.username = username;
 		this.passwd = password;
 		this.options = options ? { ...this.defaultOptions, ...options } : this.defaultOptions;
-		// We could add flo-headers here, might be a nice idea
 	}
 
 	public async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
@@ -217,7 +216,6 @@ export default class AxiosDigest {
 						// we could (should?) add other http status codes
 						// that are excluded from retrying, i.e. 429: too many requests
 
-						// retry if we do retries
 						if (this.options.retry && retryAttempt < this.options.retry_times) {
 							return timer(retryAttempt * 1000);
 						}

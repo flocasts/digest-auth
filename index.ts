@@ -4,6 +4,7 @@ import * as md5 from 'js-md5';
 import { sha256 } from 'js-sha256';
 import { sha512, sha512_256 as sha512256 } from 'js-sha512';
 import { Observable, defer, map, firstValueFrom, retryWhen, mergeMap, throwError, timer } from 'rxjs';
+import extend from 'lodash/fp/extend';
 
 export enum Method {
 	GET = 'GET',
@@ -22,9 +23,12 @@ export enum AUTH_ALGO {
 }
 
 export interface Options {
-	retry: boolean;
-	retryAttempts: number;
-	statusCodesExcludedFromRetry: number[];
+	retry: {
+		enabled: boolean;
+		attempts: number;
+		excludedStatusCodes: number[];
+		exponentialBackupMultiplier: number;
+	};
 	timeout: number;
 	baseUrl: string;
 }
@@ -39,11 +43,14 @@ export default class AxiosDigest {
 	private hasRetried401: boolean;
 
 	private readonly defaultOptions: Options = {
-		retry: true,
-		retryAttempts: 10,
+		retry: {
+			enabled: true,
+			attempts: 10,
+			excludedStatusCodes: [],
+			exponentialBackupMultiplier: 1000,
+		},
 		timeout: 10000,
 		baseUrl: '',
-		statusCodesExcludedFromRetry: [],
 	};
 
 	constructor(
@@ -55,7 +62,7 @@ export default class AxiosDigest {
 		this.axios = customAxios ? customAxios : axios.create();
 		this.username = username;
 		this.passwd = password;
-		this.options = options ? { ...this.defaultOptions, ...options } : this.defaultOptions;
+		this.options = options ? extend(this.defaultOptions, options) : this.defaultOptions;
 	}
 
 	public async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
@@ -218,11 +225,11 @@ export default class AxiosDigest {
 					const retryAttempt = i + 1;
 
 					if (error.status !== 401) {
-						if (this.options.statusCodesExcludedFromRetry.includes(error.status)) {
+						if (this.options.retry.excludedStatusCodes.includes(error.status)) {
 							return throwError(() => error);
 						}
 
-						if (this.options.retry && retryAttempt < this.options.retryAttempts) {
+						if (this.options.retry.enabled && retryAttempt < this.options.retry.attempts) {
 							// check if we should use exponential-backoff
 							if (EXP_BACKOFF_CODES.includes(error.status)) {
 								// should the multiplier be configurable?

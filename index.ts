@@ -232,8 +232,7 @@ export default class AxiosDigest {
 						if (this.options.retry.enabled && retryAttempt < this.options.retry.attempts) {
 							// check if we should use exponential-backoff
 							if (EXP_BACKOFF_CODES.includes(error.status)) {
-								// should the multiplier be configurable?
-								return timer(retryAttempt * 1000);
+								return timer(retryAttempt * this.options.retry.exponentialBackupMultiplier);
 							}
 							return timer(0);
 						}

@@ -77,10 +77,11 @@ export default class AxiosDigest {
 	}
 
 	public async sendRequest<T>(method: Method, url: string, config?: AxiosRequestConfig): Promise<T> {
-		const conf = {
+		const conf: AxiosRequestConfig = {
 			method,
 			url,
-			...(this.defaultOptions.baseUrl && { baseURL: this.defaultOptions.baseUrl }),
+			...(this.options.baseUrl !== '' && { baseURL: this.options.baseUrl }),
+			timeout: this.options.timeout,
 			...config,
 		};
 

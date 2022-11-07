@@ -23,7 +23,7 @@ export enum AUTH_ALGO {
 
 export interface Options {
 	retry: boolean;
-	retry_times: number;
+	retryAttempts: number;
 	timeout: number;
 	baseUrl: string;
 }
@@ -36,7 +36,7 @@ export default class AxiosDigest {
 
 	private readonly defaultOptions: Options = {
 		retry: true,
-		retry_times: 10,
+		retryAttempts: 10,
 		timeout: 10000,
 		baseUrl: '',
 	};
@@ -216,7 +216,7 @@ export default class AxiosDigest {
 						// we could (should?) add other http status codes
 						// that are excluded from retrying, i.e. 429: too many requests
 
-						if (this.options.retry && retryAttempt < this.options.retry_times) {
+						if (this.options.retry && retryAttempt < this.options.retryAttempts) {
 							return timer(retryAttempt * 1000);
 						}
 					} else if (i === 0) {

@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-unused-vars
-import axios, { AxiosInstance, AxiosStatic, AxiosRequestConfig, AxiosError, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, AxiosStatic, AxiosRequestConfig, AxiosResponse } from 'axios';
 import * as md5 from 'js-md5';
 import { sha256 } from 'js-sha256';
 import { sha512, sha512_256 as sha512256 } from 'js-sha512';

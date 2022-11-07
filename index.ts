@@ -217,6 +217,7 @@ export default class AxiosDigest {
 						// that are excluded from retrying, i.e. 429: too many requests
 
 						if (this.options.retry && retryAttempt < this.options.retryAttempts) {
+							// should the retry multiplier be configurable?
 							return timer(retryAttempt * 1000);
 						}
 					} else if (i === 0) {

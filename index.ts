@@ -3,7 +3,7 @@ import axios, { AxiosInstance, AxiosStatic, AxiosRequestConfig, AxiosError, Axio
 import * as md5 from 'js-md5';
 import { sha256 } from 'js-sha256';
 import { sha512, sha512_256 as sha512256 } from 'js-sha512';
-import { Observable, defer, retry, map, firstValueFrom } from 'rxjs';
+import { Observable, defer, map, firstValueFrom, retryWhen, mergeMap, throwError, timer } from 'rxjs';
 
 export enum Method {
 	GET = 'GET',
@@ -22,10 +22,10 @@ export enum AUTH_ALGO {
 }
 
 export interface Options {
-	retry?: boolean;
-	retry_times?: number;
-	timeout?: number;
-	baseUrl?: string;
+	retry: boolean;
+	retry_times: number;
+	timeout: number;
+	baseUrl: string;
 }
 
 export default class AxiosDigest {
@@ -38,6 +38,7 @@ export default class AxiosDigest {
 		retry: true,
 		retry_times: 10,
 		timeout: 10000,
+		baseUrl: '',
 	};
 
 	constructor(username: string, password: string, customAxios?: AxiosInstance | AxiosStatic, options?: Options) {
@@ -83,35 +84,14 @@ export default class AxiosDigest {
 			...config,
 		};
 
-		let observable: Observable<T>;
-		// These retries should only happen if it's not a 401,
-		// if it's a 401 we need to retry AFTER building the auth-headers
-		if (this.options.retry) {
-			observable = defer(() => this.axios.request<{ data: T }>(conf)).pipe(
-				retry(this.options.retry_times),
-				map((res: AxiosResponse<{ data: T }>) => {
-					return res.data.data;
-				}),
-			);
-		} else {
-			observable = defer(() => this.axios.request<{ data: T }>(conf)).pipe(
-				map((res: AxiosResponse<{ data: T }>) => {
-					return res.data.data;
-				}),
-			);
-		}
+		const observable = defer(() => this.axios.request<{ data: T }>(conf)).pipe(
+			retryWhen(this.retryStrategy({ method, url, config })),
+			map((res: AxiosResponse<{ data: T }>) => {
+				return res.data.data;
+			}),
+		);
 
-		try {
-			return await firstValueFrom(observable);
-		} catch (e: any) {
-			const err = e as AxiosError;
-			if (err.isAxiosError && err.response?.status === 401) {
-				const authHeader: string = err.response.headers['www-authenticate'];
-				const newConfig = this.getAuthHeadersConfig(authHeader, method, url, conf);
-				return await this.axios.request(newConfig);
-			}
-			throw e;
-		}
+		return await firstValueFrom(observable);
 	}
 
 	private getAuthHeadersConfig(
@@ -219,4 +199,31 @@ export default class AxiosDigest {
 		config.headers.Authorization = auth;
 		return config;
 	}
+
+	private retryStrategy =
+		({ method, url, config }) =>
+		(attempts: Observable<any>) => {
+			return attempts.pipe(
+				mergeMap((error, i) => {
+					const retryAttempt = i + 1;
+
+					if (error.status !== 401) {
+						// retry if we do retries
+						if (this.options.retry && retryAttempt < this.options.retry_times) {
+							return timer(retryAttempt * 1000);
+						}
+					} else {
+						// only retry 401 once to get new authHeader,
+						// 401 after the first time likely means incorrect username/passwrd
+						if (i === 0) {
+							// get new authHeader and re-request
+							const authHeader: string = error.response.headers['www-authenticate'];
+							const newConfig = this.getAuthHeadersConfig(authHeader, method, url, config);
+							return this.sendRequest(method, url, newConfig);
+						}
+					}
+					return throwError(() => error);
+				}),
+			);
+		};
 }

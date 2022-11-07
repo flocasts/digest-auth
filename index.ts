@@ -24,9 +24,12 @@ export enum AUTH_ALGO {
 export interface Options {
 	retry: boolean;
 	retryAttempts: number;
+	statusCodesExcludedFromRetry: number[];
 	timeout: number;
 	baseUrl: string;
 }
+
+const EXP_BACKOFF_CODES: number[] = [429, 503];
 
 export default class AxiosDigest {
 	private readonly axios: AxiosInstance | AxiosStatic;
@@ -40,6 +43,7 @@ export default class AxiosDigest {
 		retryAttempts: 10,
 		timeout: 10000,
 		baseUrl: '',
+		statusCodesExcludedFromRetry: [],
 	};
 
 	constructor(
@@ -214,13 +218,17 @@ export default class AxiosDigest {
 					const retryAttempt = i + 1;
 
 					if (error.status !== 401) {
-						// we could (should?) add other http status codes
-						// that are excluded from retrying, i.e. 429: too many requests
-						// we could also extend the options to take a number[] of http status codes we exclude
+						if (this.options.statusCodesExcludedFromRetry.includes(error.status)) {
+							return throwError(() => error);
+						}
 
 						if (this.options.retry && retryAttempt < this.options.retryAttempts) {
-							// should the retry multiplier be configurable?
-							return timer(retryAttempt * 1000);
+							// check if we should use exponential-backoff
+							if (EXP_BACKOFF_CODES.includes(error.status)) {
+								// should the multiplier be configurable?
+								return timer(retryAttempt * 1000);
+							}
+							return timer(0);
 						}
 					} else if (i === 0 && !this.hasRetried401) {
 						// only retry 401 once to get new authHeader,

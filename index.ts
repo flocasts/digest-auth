@@ -41,7 +41,12 @@ export default class AxiosDigest {
 		baseUrl: '',
 	};
 
-	constructor(username: string, password: string, customAxios?: AxiosInstance | AxiosStatic, options?: Options) {
+	constructor(
+		username: string,
+		password: string,
+		customAxios?: AxiosInstance | AxiosStatic,
+		options?: Partial<Options>,
+	) {
 		this.axios = customAxios ? customAxios : axios.create();
 		this.username = username;
 		this.passwd = password;

@@ -86,7 +86,7 @@ export default class AxiosDigest {
 		};
 
 		const observable = defer(() => this.axios.request<{ data: T }>(conf)).pipe(
-			retryWhen(this.retryStrategy({ method, url, config })),
+			retryWhen(this.retryStrategy({ method, url, config: conf })),
 			map((res: AxiosResponse<{ data: T }>) => {
 				return res.data.data;
 			}),

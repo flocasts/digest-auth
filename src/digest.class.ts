@@ -3,8 +3,6 @@ import { getAuthDetails, createDigestResponse, createHa1, createHa2, getAlgorith
 import type { AxiosInstance, AxiosStatic, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { URL } from 'url';
 
-const EXP_BACKOFF_CODES = [429, 503];
-
 export class AxiosDigest {
     private readonly axios: AxiosInstance | AxiosStatic;
     private readonly username: string;
@@ -17,7 +15,8 @@ export class AxiosDigest {
         retryOptions: {
             attempts: 10,
             excludedStatusCodes: [401],
-            exponentialBackupMultiplier: 1000,
+            exponentialBackoffMultiplier: 1000,
+            exponentialBackoffEnabledStatusCodes: [429, 503],
         },
         retry: true,
     };
@@ -45,6 +44,11 @@ export class AxiosDigest {
             : this.defaultOptions;
     }
 
+    /**
+     * Convenient wrapper around the `sendRequest` method for GET requests
+     * @param url URL for request
+     * @param config AxiosRequestConfig object
+     */
     public async get<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
         try {
             return await this.sendRequest<T>(Method.GET, url, config);
@@ -53,6 +57,12 @@ export class AxiosDigest {
         }
     }
 
+    /**
+     * Convenient wrapper around the `sendRequest` method for POST requests
+     * @param url URL for request
+     * @param data data to send with request
+     * @param config AxiosRequestConfig object
+     */
     public async post<D, T>(url: string, data?: D, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
         config = data ? { data, ...config } : config;
         try {
@@ -62,6 +72,12 @@ export class AxiosDigest {
         }
     }
 
+    /**
+     * Convenient wrapper around the `sendRequest` method for PATCH requests
+     * @param url URL for request
+     * @param data data to send with request
+     * @param config AxiosRequestConfig object
+     */
     public async patch<D, T>(url: string, data?: D, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
         config = data ? { data, ...config } : config;
         try {
@@ -71,6 +87,12 @@ export class AxiosDigest {
         }
     }
 
+    /**
+     * Convenient wrapper around the `sendRequest` method for PUT requests
+     * @param url URL for request
+     * @param data data to send with request
+     * @param config AxiosRequestConfig object
+     */
     public async put<D, T>(url: string, data?: D, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
         config = data ? { data, ...config } : config;
         try {
@@ -80,6 +102,11 @@ export class AxiosDigest {
         }
     }
 
+    /**
+     * Convenient wrapper around the `sendRequest` method for DELETE requests
+     * @param url URL for request
+     * @param config AxiosRequestConfig object
+     */
     public async delete<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
         try {
             return await this.sendRequest<T>(Method.DELETE, url, config);
@@ -88,6 +115,11 @@ export class AxiosDigest {
         }
     }
 
+    /**
+     * Convenient wrapper around the `sendRequest` method for HEAD requests
+     * @param url URL for request
+     * @param config AxiosRequestConfig object
+     */
     public async head<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
         try {
             return await this.sendRequest<T>(Method.HEAD, url, config);
@@ -96,6 +128,13 @@ export class AxiosDigest {
         }
     }
 
+    /**
+     * Send a request to specified URL using axios. Handles digest-authentication-enabled endpoints,
+     * as well as both immediate and exponentially backed-off retries for (configurable) HTTP error status codes.
+     * @param method HTTP method of request
+     * @param url URL for request
+     * @param config AxiosRequestConfig object
+     */
     public async sendRequest<T>(method: Method, url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
         const conf: AxiosRequestConfig = { method, url, ...config };
 
@@ -129,8 +168,8 @@ export class AxiosDigest {
             ) {
                 this.retryAttemptCount += 1;
                 // check if we should use exponential-backoff
-                if (EXP_BACKOFF_CODES.includes(statusCode)) {
-                    await sleep(this.retryAttemptCount * this.options.retryOptions.exponentialBackupMultiplier);
+                if (this.options.retryOptions.exponentialBackoffEnabledStatusCodes.includes(statusCode)) {
+                    await sleep(this.retryAttemptCount * this.options.retryOptions.exponentialBackoffMultiplier);
                     return await this.sendRequest(method, url, config);
                 } else {
                     return await this.sendRequest(method, url, config);
@@ -142,6 +181,12 @@ export class AxiosDigest {
         }
     }
 
+    /**
+     * Parse `www-authenticate` header on requests to endpoints that use digest-auth,
+     * and create `authorization` header for following authentication request
+     * @param res AxiosResponse object used to build new config based on previous config
+     * @returns AxiosRequestConfig object to be used in subsequent requests
+     */
     private getAuthHeadersConfig(res: AxiosResponse): AxiosRequestConfig {
         const authDetails = getAuthDetails(res.headers['www-authenticate']);
         ++this.retryAttemptCount;

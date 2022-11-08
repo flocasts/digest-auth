@@ -40,10 +40,6 @@ export class AxiosDigest {
                   retryOptions: {
                       ...this.defaultOptions.retryOptions,
                       ...options.retryOptions,
-                      excludedStatusCodes: [
-                          ...this.defaultOptions.retryOptions.excludedStatusCodes,
-                          ...(options.retryOptions?.excludedStatusCodes ?? []),
-                      ],
                   },
               }
             : this.defaultOptions;

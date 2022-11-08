@@ -135,3 +135,10 @@ export function getHashBaseByAlgo(algo: Algorithm): crypto.Hash {
             return crypto.createHash('md5');
     }
 }
+
+export function getUniqueRequestHash(): string {
+    return crypto
+        .createHash('sha256')
+        .update(`${+Date.now()}`)
+        .digest('hex');
+}

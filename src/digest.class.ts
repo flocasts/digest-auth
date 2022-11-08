@@ -1,5 +1,13 @@
 import { Options, Method } from './digest.interface';
-import { getAuthDetails, createDigestResponse, createHa1, createHa2, getAlgorithm, sleep } from './digest.helpers';
+import {
+    getAuthDetails,
+    createDigestResponse,
+    createHa1,
+    createHa2,
+    getAlgorithm,
+    sleep,
+    getUniqueRequestHash,
+} from './digest.helpers';
 import type { AxiosInstance, AxiosStatic, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { URL } from 'url';
 
@@ -8,8 +16,12 @@ export class AxiosDigest {
     private readonly username: string;
     private readonly password: string;
     private readonly options: Options;
-    private retryAttemptCount: number;
-    private hasRetried401: boolean;
+    /**
+     * This is used for sudo "locking" of each request,
+     * by keeping track of each requests attempts seperately, incase we ever have multiple requests
+     * firing at the same time. Not sure if that's really possible here, but figured safety-first
+     */
+    private retryAttempts: Map<string, { count: number; hasRetried401: boolean }>;
 
     private readonly defaultOptions: Options = {
         retryOptions: {
@@ -30,7 +42,7 @@ export class AxiosDigest {
         this.axios = customAxios;
         this.username = username;
         this.password = password;
-        this.retryAttemptCount = 0;
+        this.retryAttempts = new Map();
         // this is a bit ugly but better safe than sorry when it comes to shallow merges
         this.options = options
             ? {
@@ -50,11 +62,7 @@ export class AxiosDigest {
      * @param config AxiosRequestConfig object
      */
     public async get<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-        try {
-            return await this.sendRequest<T>(Method.GET, url, config);
-        } finally {
-            this.retryAttemptCount = 0;
-        }
+        return await this.sendRequest<T>(Method.GET, url, config);
     }
 
     /**
@@ -65,11 +73,7 @@ export class AxiosDigest {
      */
     public async post<D, T>(url: string, data?: D, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
         config = data ? { data, ...config } : config;
-        try {
-            return await this.sendRequest<T>(Method.POST, url, config);
-        } finally {
-            this.retryAttemptCount = 0;
-        }
+        return await this.sendRequest<T>(Method.POST, url, config);
     }
 
     /**
@@ -80,11 +84,7 @@ export class AxiosDigest {
      */
     public async patch<D, T>(url: string, data?: D, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
         config = data ? { data, ...config } : config;
-        try {
-            return await this.sendRequest<T>(Method.PATCH, url, config);
-        } finally {
-            this.retryAttemptCount = 0;
-        }
+        return await this.sendRequest<T>(Method.PATCH, url, config);
     }
 
     /**
@@ -95,11 +95,7 @@ export class AxiosDigest {
      */
     public async put<D, T>(url: string, data?: D, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
         config = data ? { data, ...config } : config;
-        try {
-            return await this.sendRequest<T>(Method.PUT, url, config);
-        } finally {
-            this.retryAttemptCount = 0;
-        }
+        return await this.sendRequest<T>(Method.PUT, url, config);
     }
 
     /**
@@ -108,11 +104,7 @@ export class AxiosDigest {
      * @param config AxiosRequestConfig object
      */
     public async delete<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-        try {
-            return await this.sendRequest<T>(Method.DELETE, url, config);
-        } finally {
-            this.retryAttemptCount = 0;
-        }
+        return await this.sendRequest<T>(Method.DELETE, url, config);
     }
 
     /**
@@ -121,11 +113,19 @@ export class AxiosDigest {
      * @param config AxiosRequestConfig object
      */
     public async head<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-        try {
-            return await this.sendRequest<T>(Method.HEAD, url, config);
-        } finally {
-            this.retryAttemptCount = 0;
-        }
+        return await this.sendRequest<T>(Method.HEAD, url, config);
+    }
+
+    /**
+     * Method to build http requests
+     * @param method HTTP method for request
+     * @param url URL for request
+     * @param config AxiosRequestConfig object
+     */
+    // This method exists so that we can keep the sendRequest method private for safety,
+    // hides the `requestHash` param of sendRequest as that is only for internal use
+    public async request<T>(method: Method, url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+        return await this.sendRequest<T>(method, url, config);
     }
 
     /**
@@ -135,7 +135,16 @@ export class AxiosDigest {
      * @param url URL for request
      * @param config AxiosRequestConfig object
      */
-    public async sendRequest<T>(method: Method, url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    private async sendRequest<T>(
+        method: Method,
+        url: string,
+        config?: AxiosRequestConfig,
+        requestHash?: string,
+    ): Promise<AxiosResponse<T>> {
+        if (!requestHash) {
+            requestHash = getUniqueRequestHash();
+            this.retryAttempts[requestHash] = { count: 0, hasRetried401: false };
+        }
         const conf: AxiosRequestConfig = { method, url, ...config };
 
         try {
@@ -150,33 +159,31 @@ export class AxiosDigest {
             // Only retry 401 once to get digest auth header,
             // 401 after the first attempt likely means incorrect username/passwrd
             if (
-                this.retryAttemptCount === 0 &&
                 statusCode === 401 &&
-                !this.hasRetried401 &&
+                this.retryAttempts[requestHash].count === 0 &&
+                !this.retryAttempts[requestHash].hasRetried401 &&
                 authHeader.includes('nonce')
             ) {
-                const newConfig = this.getAuthHeadersConfig(err.response);
-                this.hasRetried401 = true;
-                this.retryAttemptCount = 1;
-                return await this.sendRequest(method, url, newConfig);
+                this.retryAttempts[requestHash] = { count: 1, hasRetried401: true };
+                const newConfig = this.getAuthHeadersConfig(err.response, this.retryAttempts[requestHash].count);
+                return await this.sendRequest(method, url, newConfig, requestHash);
             }
 
             if (
                 this.options.retry &&
                 !this.options.retryOptions.excludedStatusCodes.includes(statusCode) &&
-                this.retryAttemptCount < this.options.retryOptions.attempts
+                this.retryAttempts[requestHash].count < this.options.retryOptions.attempts
             ) {
-                this.retryAttemptCount += 1;
-                // check if we should use exponential-backoff
+                // check if we should use exponential-backoff, and sleep if needed
                 if (this.options.retryOptions.exponentialBackoffEnabledStatusCodes.includes(statusCode)) {
-                    await sleep(this.retryAttemptCount * this.options.retryOptions.exponentialBackoffMultiplier);
-                    return await this.sendRequest(method, url, config);
-                } else {
-                    return await this.sendRequest(method, url, config);
+                    await sleep(
+                        this.retryAttempts[requestHash].count * this.options.retryOptions.exponentialBackoffMultiplier,
+                    );
                 }
+                this.retryAttempts[requestHash].count += 1;
+                return await this.sendRequest(method, url, config, requestHash);
             }
-            // just throw the http error in the end
-            this.retryAttemptCount = 0;
+            delete this.retryAttempts[requestHash];
             throw err;
         }
     }
@@ -187,11 +194,10 @@ export class AxiosDigest {
      * @param res AxiosResponse object used to build new config based on previous config
      * @returns AxiosRequestConfig object to be used in subsequent requests
      */
-    private getAuthHeadersConfig(res: AxiosResponse): AxiosRequestConfig {
+    private getAuthHeadersConfig(res: AxiosResponse, attemptCount: number): AxiosRequestConfig {
         const authDetails = getAuthDetails(res.headers['www-authenticate']);
-        ++this.retryAttemptCount;
 
-        const nonceCount = ('00000000' + this.retryAttemptCount).slice(-8);
+        const nonceCount = ('00000000' + attemptCount).slice(-8);
         const cnonce = 'B1Spiule'; // seems to work with any hardcoded alphanumeric string with 8 chars
         const { algo, useSess } = getAlgorithm(authDetails['algorithm'] ?? authDetails['ALGORITHM'] ?? 'md5');
         const path = new URL(res.config.url).pathname;

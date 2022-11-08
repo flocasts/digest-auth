@@ -1,7 +1,7 @@
 import { Options, Method } from './digest.interface';
 import { getAuthDetails, createDigestResponse, createHa1, createHa2, getAlgorithm } from './digest.helpers';
 import type { AxiosInstance, AxiosStatic, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
-import { defer, firstValueFrom, mergeMap, Observable, pipe, retryWhen, throwError, timer } from 'rxjs';
+import { defer, firstValueFrom, mergeMap, Observable, retryWhen, throwError, timer } from 'rxjs';
 import { URL } from 'url';
 
 const EXP_BACKOFF_CODES = [429, 503];
@@ -124,43 +124,36 @@ export class AxiosDigest {
     }
 
     private retryStrategy({ method, url }): (_: Observable<any>) => Observable<any> {
-        return pipe(
-            retryWhen((errors) =>
-                errors.pipe(
-                    mergeMap((error: AxiosError, i: number) => {
-                        const retryAttempt = i + 1;
-                        const status: number = error?.response?.status;
-                        console.log(`attempt number ${retryAttempt} - status: ${status}`);
-                        const authenticateHeader: string = error?.response?.headers['www-authenticate'];
+        return retryWhen((errors) =>
+            errors.pipe(
+                mergeMap((error: AxiosError, i: number) => {
+                    const retryAttempt = i + 1;
+                    const status: number = error?.response?.status;
+                    console.log(`attempt number ${retryAttempt} - status: ${status}`);
+                    const authenticateHeader: string = error?.response?.headers['www-authenticate'];
 
-                        // Only retry 401 once to get digest auth header,
-                        // 401 after the first attempt likely means incorrect username/passwrd
-                        if (
-                            i === 0 &&
-                            !this.hasRetried401 &&
-                            authenticateHeader &&
-                            authenticateHeader.includes('nonce')
-                        ) {
-                            const newConfig = this.getAuthHeadersConfig(error.response);
-                            this.hasRetried401 = true;
-                            return this.sendRequest(method, url, newConfig);
-                        } else {
-                            if (this.options.retryOptions.excludedStatusCodes.includes(status)) {
-                                return throwError(() => error);
-                            }
-
-                            if (this.options.retry && retryAttempt < this.options.retryOptions.attempts) {
-                                // check if we should use exponential-backoff
-                                if (EXP_BACKOFF_CODES.includes(status)) {
-                                    return timer(retryAttempt * this.options.retryOptions.exponentialBackupMultiplier);
-                                }
-                                return timer(0);
-                            }
+                    // Only retry 401 once to get digest auth header,
+                    // 401 after the first attempt likely means incorrect username/passwrd
+                    if (i === 0 && !this.hasRetried401 && authenticateHeader && authenticateHeader.includes('nonce')) {
+                        const newConfig = this.getAuthHeadersConfig(error.response);
+                        this.hasRetried401 = true;
+                        return this.sendRequest(method, url, newConfig);
+                    } else {
+                        if (this.options.retryOptions.excludedStatusCodes.includes(status)) {
+                            return throwError(() => error);
                         }
-                        // just throw the http error in the end
-                        return throwError(() => error);
-                    }),
-                ),
+
+                        if (this.options.retry && retryAttempt < this.options.retryOptions.attempts) {
+                            // check if we should use exponential-backoff
+                            if (EXP_BACKOFF_CODES.includes(status)) {
+                                return timer(retryAttempt * this.options.retryOptions.exponentialBackupMultiplier);
+                            }
+                            return timer(0);
+                        }
+                    }
+                    // just throw the http error in the end
+                    return throwError(() => error);
+                }),
             ),
         );
     }

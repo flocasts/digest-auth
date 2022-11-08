@@ -1,7 +1,6 @@
 import { Options, Method } from './digest.interface';
-import { getAuthDetails, createDigestResponse, createHa1, createHa2, getAlgorithm } from './digest.helpers';
+import { getAuthDetails, createDigestResponse, createHa1, createHa2, getAlgorithm, sleep } from './digest.helpers';
 import type { AxiosInstance, AxiosStatic, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
-import { defer, firstValueFrom, mergeMap, Observable, retryWhen, throwError, timer } from 'rxjs';
 import { URL } from 'url';
 
 const EXP_BACKOFF_CODES = [429, 503];
@@ -11,13 +10,13 @@ export class AxiosDigest {
     private readonly username: string;
     private readonly password: string;
     private readonly options: Options;
-    private count: number;
+    private retryAttemptCount: number;
     private hasRetried401: boolean;
 
     private readonly defaultOptions: Options = {
         retryOptions: {
             attempts: 10,
-            excludedStatusCodes: [],
+            excludedStatusCodes: [401],
             exponentialBackupMultiplier: 1000,
         },
         retry: true,
@@ -32,65 +31,126 @@ export class AxiosDigest {
         this.axios = customAxios;
         this.username = username;
         this.password = password;
-        this.count = 0;
+        this.retryAttemptCount = 0;
+        // this is a bit ugly but better safe than sorry when it comes to shallow merges
         this.options = options
             ? {
                   ...this.defaultOptions,
                   ...options,
-                  retryOptions: { ...this.defaultOptions.retryOptions, ...options.retryOptions },
+                  retryOptions: {
+                      ...this.defaultOptions.retryOptions,
+                      ...options.retryOptions,
+                      excludedStatusCodes: [
+                          ...this.defaultOptions.retryOptions.excludedStatusCodes,
+                          ...(options.retryOptions?.excludedStatusCodes ?? []),
+                      ],
+                  },
               }
             : this.defaultOptions;
     }
 
     public async get<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-        return await this.sendRequest<T>(Method.GET, url, config);
+        try {
+            return await this.sendRequest<T>(Method.GET, url, config);
+        } finally {
+            this.retryAttemptCount = 0;
+        }
     }
 
     public async post<D, T>(url: string, data?: D, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
         config = data ? { data, ...config } : config;
-        return await this.sendRequest<T>(Method.POST, url, config);
+        try {
+            return await this.sendRequest<T>(Method.POST, url, config);
+        } finally {
+            this.retryAttemptCount = 0;
+        }
     }
 
     public async patch<D, T>(url: string, data?: D, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
         config = data ? { data, ...config } : config;
-        return await this.sendRequest<T>(Method.PATCH, url, config);
+        try {
+            return await this.sendRequest<T>(Method.PATCH, url, config);
+        } finally {
+            this.retryAttemptCount = 0;
+        }
     }
 
     public async put<D, T>(url: string, data?: D, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
         config = data ? { data, ...config } : config;
-        return await this.sendRequest<T>(Method.PUT, url, config);
+        try {
+            return await this.sendRequest<T>(Method.PUT, url, config);
+        } finally {
+            this.retryAttemptCount = 0;
+        }
     }
 
     public async delete<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-        return await this.sendRequest<T>(Method.DELETE, url, config);
+        try {
+            return await this.sendRequest<T>(Method.DELETE, url, config);
+        } finally {
+            this.retryAttemptCount = 0;
+        }
     }
 
     public async head<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-        return await this.sendRequest<T>(Method.HEAD, url, config);
+        try {
+            return await this.sendRequest<T>(Method.HEAD, url, config);
+        } finally {
+            this.retryAttemptCount = 0;
+        }
     }
 
     public async sendRequest<T>(method: Method, url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
         const conf: AxiosRequestConfig = { method, url, ...config };
 
-        // const observable = defer(() => this.axios.request<T>(conf)).pipe(this.retryStrategy({ method, url }));
-        const observable = defer(() => this.axios.request<T>(conf)).pipe(this.retryStrategy({ method, url }));
-
-        // not sure we need this, but want to make sure `hasRetried401` gets reset
         try {
-            const result = await firstValueFrom(observable);
-            return result;
-        } catch (err) {
+            return await this.axios.request<T>(conf);
+        } catch (e: any) {
+            const err = e as AxiosError;
+            if (!err.isAxiosError) throw e;
+
+            const statusCode = err.response.status;
+            const authHeader = err.response.headers['www-authenticate'];
+
+            // Only retry 401 once to get digest auth header,
+            // 401 after the first attempt likely means incorrect username/passwrd
+            if (
+                this.retryAttemptCount === 0 &&
+                statusCode === 401 &&
+                !this.hasRetried401 &&
+                authHeader.includes('nonce')
+            ) {
+                const newConfig = this.getAuthHeadersConfig(err.response);
+                this.hasRetried401 = true;
+                this.retryAttemptCount = 1;
+                return await this.sendRequest(method, url, newConfig);
+            }
+
+            if (
+                this.options.retry &&
+                !this.options.retryOptions.excludedStatusCodes.includes(statusCode) &&
+                this.retryAttemptCount < this.options.retryOptions.attempts
+            ) {
+                this.retryAttemptCount += 1;
+                // check if we should use exponential-backoff
+                if (EXP_BACKOFF_CODES.includes(statusCode)) {
+                    await sleep(this.retryAttemptCount * this.options.retryOptions.exponentialBackupMultiplier);
+                    return await this.sendRequest(method, url, config);
+                } else {
+                    return await this.sendRequest(method, url, config);
+                }
+            }
+            // just throw the http error in the end
+            this.retryAttemptCount = 0;
             throw err;
-        } finally {
-            this.hasRetried401 = false;
         }
     }
 
     private getAuthHeadersConfig(res: AxiosResponse): AxiosRequestConfig {
         const authDetails = getAuthDetails(res.headers['www-authenticate']);
-        ++this.count;
+        ++this.retryAttemptCount;
 
-        const nonceCount = ('00000000' + this.count).slice(-8);
+        const nonceCount = ('00000000' + this.retryAttemptCount).slice(-8);
         const cnonce = 'B1Spiule'; // seems to work with any hardcoded alphanumeric string with 8 chars
         const { algo, useSess } = getAlgorithm(authDetails['algorithm'] ?? authDetails['ALGORITHM'] ?? 'md5');
         const path = new URL(res.config.url).pathname;
@@ -121,40 +181,5 @@ export class AxiosDigest {
 
         res.config = { ...res.config, headers: { ...res.config.headers, authorization } };
         return res.config;
-    }
-
-    private retryStrategy({ method, url }): (_: Observable<any>) => Observable<any> {
-        return retryWhen((errors) =>
-            errors.pipe(
-                mergeMap((error: AxiosError, i: number) => {
-                    const retryAttempt = i + 1;
-                    const status: number = error?.response?.status;
-                    console.log(`attempt number ${retryAttempt} - status: ${status}`);
-                    const authenticateHeader: string = error?.response?.headers['www-authenticate'];
-
-                    // Only retry 401 once to get digest auth header,
-                    // 401 after the first attempt likely means incorrect username/passwrd
-                    if (i === 0 && !this.hasRetried401 && authenticateHeader && authenticateHeader.includes('nonce')) {
-                        const newConfig = this.getAuthHeadersConfig(error.response);
-                        this.hasRetried401 = true;
-                        return this.sendRequest(method, url, newConfig);
-                    } else {
-                        if (this.options.retryOptions.excludedStatusCodes.includes(status)) {
-                            return throwError(() => error);
-                        }
-
-                        if (this.options.retry && retryAttempt < this.options.retryOptions.attempts) {
-                            // check if we should use exponential-backoff
-                            if (EXP_BACKOFF_CODES.includes(status)) {
-                                return timer(retryAttempt * this.options.retryOptions.exponentialBackupMultiplier);
-                            }
-                            return timer(0);
-                        }
-                    }
-                    // just throw the http error in the end
-                    return throwError(() => error);
-                }),
-            ),
-        );
     }
 }

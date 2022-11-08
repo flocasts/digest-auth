@@ -1,6 +1,10 @@
 import { Algorithm, AuthDetails } from './digest.interface';
 import * as crypto from 'crypto';
 
+export async function sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export function getAuthDetails(header: string): AuthDetails {
     const withoutDigestKeyword = header.replace('Digest ', '');
     let authDetailsString = withoutDigestKeyword

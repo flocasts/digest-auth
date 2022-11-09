@@ -223,8 +223,9 @@ export class AxiosDigest {
 
         const authorization =
             `Digest username="${this.username}",realm="${authDetails.realm}",` +
-            `nonce="${authDetails.nonce}",uri="${path}",algorithm="${algo.toUpperCase()}",qop=${authDetails.qop},` +
-            `nc=${nonceCount},cnonce="${cnonce}",response="${response}"`;
+                `nonce="${authDetails.nonce}",uri="${path}",algorithm="${algo.toUpperCase()}",qop=${authDetails.qop},` +
+                `nc=${nonceCount},cnonce="${cnonce}",response="${response}"` +
+                authDetails.opaque && `opaque="${authDetails.opaque}"`;
 
         res.config = { ...res.config, headers: { ...res.config.headers, authorization } };
         return res.config;

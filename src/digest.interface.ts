@@ -46,7 +46,7 @@ export interface Options {
         /**
          * A list of HTTP status codes that, when receieved in a response, will be retried with exponential backoff
          */
-        exponentialBackoffEnabledStatusCodes: number[];
+        exponentialBackoffEnabledStatusCodes?: number[];
     };
     /**
      * Whether or not retries are enabled. If false, no requests will be retried, regardless of the status code

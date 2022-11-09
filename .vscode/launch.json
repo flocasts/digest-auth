@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Jest Tests",
+            "request": "launch",
+            "runtimeArgs": ["run-script", "test"],
+            "runtimeExecutable": "npm",
+            "skipFiles": ["<node_internals>/**"],
+            "type": "node",
+            "outputCapture": "std",
+            "presentation": {
+                "hidden": false,
+                "group": "Tests",
+                "order": 3
+            }
+        }
+    ]
+}

@@ -31,6 +31,7 @@ export class AxiosDigest {
             exponentialBackoffEnabledStatusCodes: [429, 503],
         },
         retry: true,
+        timeout: 60 * 1000, // 1 minute
     };
 
     constructor(

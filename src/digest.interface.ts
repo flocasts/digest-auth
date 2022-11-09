@@ -52,6 +52,10 @@ export interface Options {
      * Whether or not retries are enabled. If false, no requests will be retried, regardless of the status code
      */
     retry: boolean;
+    /**
+     * Max timeout duration for requests (can also be set on a per-request basis with AxiosRequestConfig)
+     */
+    timeout: number;
 }
 
 /**

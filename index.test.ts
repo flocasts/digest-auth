@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios';
-import { AxiosDigest as DigestAuth } from './index';
+import DigestAuth from './index';
 
 const URL_md5 = 'http://localhost:1337/md5';
 const URL_md5Sess = 'http://localhost:1337/md5-sess';

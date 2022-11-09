@@ -5,6 +5,7 @@
     "authors": "Austin See <austin.see@flosports.tv>",
     "private": false,
     "main": "dist/index.js",
+    "repository": "https://github.com/flocasts/flo-axios-digest",
     "engines": {
         "node": "^16.17.0",
         "npm": "^8.15.0",

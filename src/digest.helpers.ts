@@ -91,7 +91,7 @@ export function createHa2(algo: Algorithm, qop: string, method: string, path: st
 }
 
 /**
- * Hash and return hex string for response porition of HTTP `authorization` header string being sent for digest-auth
+ * Hash and return hex string for response portion of HTTP `authorization` header string being sent for digest-auth
  * @param algo The algorithm to use for hashing
  * @param ha1 Hex string of hashed data for first position of digest response hash
  * @param ha2 Hex string of hashed data for last position of digest response hash

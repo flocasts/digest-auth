@@ -13,6 +13,7 @@ describe('Axios Digest Tests', () => {
                 const axiosDigest = new DigestAuth('test', 'wrong-password', axios.create(), { retry: true });
                 try {
                     await axiosDigest.get('http://localhost:1337/testing');
+                    expect(1).toEqual(0); // simple (dumb) way of making sure the above throws exception
                 } catch (e) {
                     const err = e as AxiosError;
                     expect(err.response).toBeDefined();
@@ -23,6 +24,7 @@ describe('Axios Digest Tests', () => {
                 const axiosDigest = new DigestAuth('wrong-username', 'test', axios.create(), { retry: true });
                 try {
                     await axiosDigest.get('http://localhost:1337/testing');
+                    expect(1).toEqual(0); // simple (dumb) way of making sure the above throws exception
                 } catch (e) {
                     const err = e as AxiosError;
                     expect(err.response).toBeDefined();
@@ -40,6 +42,7 @@ describe('Axios Digest Tests', () => {
                 const axiosDigest = new DigestAuth('test', 'wrong-password', axios.create(), { retry: true });
                 try {
                     await axiosDigest.post('http://localhost:1337/testing', { test: true });
+                    expect(1).toEqual(0); // simple (dumb) way of making sure the above throws exception
                 } catch (e) {
                     const err = e as AxiosError;
                     expect(err.response).toBeDefined();
@@ -50,6 +53,7 @@ describe('Axios Digest Tests', () => {
                 const axiosDigest = new DigestAuth('wrong-username', 'test', axios.create(), { retry: true });
                 try {
                     await axiosDigest.post('http://localhost:1337/testing', { test: true });
+                    expect(1).toEqual(0); // simple (dumb) way of making sure the above throws exception
                 } catch (e) {
                     const err = e as AxiosError;
                     expect(err.response).toBeDefined();
@@ -67,6 +71,7 @@ describe('Axios Digest Tests', () => {
                 const axiosDigest = new DigestAuth('test', 'wrong-password', axios.create(), { retry: true });
                 try {
                     await axiosDigest.patch('http://localhost:1337/testing', { test: true });
+                    expect(1).toEqual(0); // simple (dumb) way of making sure the above throws exception
                 } catch (e) {
                     const err = e as AxiosError;
                     expect(err.response).toBeDefined();
@@ -77,6 +82,7 @@ describe('Axios Digest Tests', () => {
                 const axiosDigest = new DigestAuth('wrong-username', 'test', axios.create(), { retry: true });
                 try {
                     await axiosDigest.patch('http://localhost:1337/testing', { test: true });
+                    expect(1).toEqual(0); // simple (dumb) way of making sure the above throws exception
                 } catch (e) {
                     const err = e as AxiosError;
                     expect(err.response).toBeDefined();
@@ -94,6 +100,7 @@ describe('Axios Digest Tests', () => {
                 const axiosDigest = new DigestAuth('test', 'wrong-password', axios.create(), { retry: true });
                 try {
                     await axiosDigest.put('http://localhost:1337/testing', { test: true });
+                    expect(1).toEqual(0); // simple (dumb) way of making sure the above throws exception
                 } catch (e) {
                     const err = e as AxiosError;
                     expect(err.response).toBeDefined();
@@ -104,6 +111,7 @@ describe('Axios Digest Tests', () => {
                 const axiosDigest = new DigestAuth('wrong-username', 'test', axios.create(), { retry: true });
                 try {
                     await axiosDigest.put('http://localhost:1337/testing', { test: true });
+                    expect(1).toEqual(0); // simple (dumb) way of making sure the above throws exception
                 } catch (e) {
                     const err = e as AxiosError;
                     expect(err.response).toBeDefined();
@@ -121,6 +129,7 @@ describe('Axios Digest Tests', () => {
                 const axiosDigest = new DigestAuth('test', 'wrong-password', axios.create(), { retry: true });
                 try {
                     await axiosDigest.delete('http://localhost:1337/testing');
+                    expect(1).toEqual(0); // simple (dumb) way of making sure the above throws exception
                 } catch (e) {
                     const err = e as AxiosError;
                     expect(err.response).toBeDefined();
@@ -131,6 +140,7 @@ describe('Axios Digest Tests', () => {
                 const axiosDigest = new DigestAuth('wrong-username', 'test', axios.create(), { retry: true });
                 try {
                     await axiosDigest.delete('http://localhost:1337/testing');
+                    expect(1).toEqual(0); // simple (dumb) way of making sure the above throws exception
                 } catch (e) {
                     const err = e as AxiosError;
                     expect(err.response).toBeDefined();
@@ -148,6 +158,7 @@ describe('Axios Digest Tests', () => {
                 const axiosDigest = new DigestAuth('test', 'wrong-password', axios.create(), { retry: true });
                 try {
                     await axiosDigest.head('http://localhost:1337/testing');
+                    expect(1).toEqual(0); // simple (dumb) way of making sure the above throws exception
                 } catch (e) {
                     const err = e as AxiosError;
                     expect(err.response).toBeDefined();
@@ -158,6 +169,7 @@ describe('Axios Digest Tests', () => {
                 const axiosDigest = new DigestAuth('wrong-username', 'test', axios.create(), { retry: true });
                 try {
                     await axiosDigest.head('http://localhost:1337/testing');
+                    expect(1).toEqual(0); // simple (dumb) way of making sure the above throws exception
                 } catch (e) {
                     const err = e as AxiosError;
                     expect(err.response).toBeDefined();

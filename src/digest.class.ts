@@ -230,8 +230,6 @@ export class AxiosDigest {
             authorization += `opaque="${authDetails.opaque}"`;
         }
 
-        console.log(authorization);
-
         res.config = { ...res.config, headers: { ...res.config.headers, authorization } };
         return res.config;
     }

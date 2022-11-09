@@ -16,8 +16,8 @@ const init = () => {
     });
 
     const cb = (req, res) => {
-        console.log('Digest-Auth header: ', req.headers.authorization);
-        console.log('Response status code: ', res.statusCode);
+        console.log('Digest-Auth header: ', digestToJSON(req.headers.authorization));
+        console.log('Response status code: ', res.statusCode, '\n');
         return res.end(`Welcome to private area - ${req.user}!`);
     };
 
@@ -39,3 +39,18 @@ const init = () => {
 };
 
 init();
+
+// helper for cleaner log output
+function digestToJSON(header) {
+    const withoutDigestKeyword = header.replace('Digest ', '');
+    let authDetailsString = withoutDigestKeyword
+        .replace(/{|}/g, '')
+        .split(',')
+        .map((val) => {
+            const [key, value] = val.split('=');
+            return `"${key.trim()}":${value.includes('"') ? value : `"${value}"`}`;
+        })
+        .join(',');
+    authDetailsString = `{${authDetailsString}}`;
+    return JSON.parse(authDetailsString);
+}

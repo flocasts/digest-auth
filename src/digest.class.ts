@@ -17,9 +17,9 @@ export class AxiosDigest {
     private readonly password: string;
     private readonly options: Options;
     /**
-     * This is used for sudo "locking" of each request,
-     * by keeping track of each requests attempts seperately, incase we ever have multiple requests
-     * firing at the same time. Not sure if that's really possible here, but figured safety-first
+     * This is used for keeping track of each requests attempts seperately,
+     * incase we ever have multiple requests firing at the same time.
+     * Not sure if that's really possible here, but figured safety-first
      */
     private retryAttempts: Map<string, { count: number; hasRetried401: boolean }>;
 

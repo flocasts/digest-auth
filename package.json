@@ -1,8 +1,8 @@
 {
-    "name": "flo-axios-digest",
-    "version": "0.0.1",
-    "description": "This repo exists because the axios library does not support digest authentication.",
-    "author": "Austin See",
+    "name": "axios-digest",
+    "version": "0.1.0",
+    "description": "This repo exists because the Axios library does not support digest authentication.",
+    "authors": "Austin See <austin.see@flosports.tv>",
     "private": true,
     "main": "dist/index.js",
     "engines": {

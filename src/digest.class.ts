@@ -59,96 +59,89 @@ export class AxiosDigest {
     /**
      * Convenient wrapper around the `sendRequest` method for GET requests
      * @param url URL for request
-     * @param config AxiosRequestConfig object
+     * @param config optional AxiosRequestConfig object
      */
     public async get<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-        return await this.sendRequest<T>(Method.GET, url, config);
+        config = { ...config, method: Method.GET, url };
+        return await this.sendRequest<T>(config);
     }
 
     /**
      * Convenient wrapper around the `sendRequest` method for POST requests
      * @param url URL for request
-     * @param data data to send with request
-     * @param config AxiosRequestConfig object
+     * @param data optional data to send with request
+     * @param config optional AxiosRequestConfig object
      */
     public async post<D, T>(url: string, data?: D, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-        config = data ? { data, ...config } : config;
-        return await this.sendRequest<T>(Method.POST, url, config);
+        config = { ...config, method: Method.POST, url, ...(data && data) };
+        return await this.sendRequest<T>(config);
     }
 
     /**
      * Convenient wrapper around the `sendRequest` method for PATCH requests
      * @param url URL for request
-     * @param data data to send with request
-     * @param config AxiosRequestConfig object
+     * @param data optional data to send with request
+     * @param config optional AxiosRequestConfig object
      */
     public async patch<D, T>(url: string, data?: D, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-        config = data ? { data, ...config } : config;
-        return await this.sendRequest<T>(Method.PATCH, url, config);
+        config = { ...config, method: Method.PATCH, url, ...(data && data) };
+        return await this.sendRequest<T>(config);
     }
 
     /**
      * Convenient wrapper around the `sendRequest` method for PUT requests
      * @param url URL for request
-     * @param data data to send with request
-     * @param config AxiosRequestConfig object
+     * @param data optional data to send with request
+     * @param config optional AxiosRequestConfig object
      */
     public async put<D, T>(url: string, data?: D, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-        config = data ? { data, ...config } : config;
-        return await this.sendRequest<T>(Method.PUT, url, config);
+        config = { ...config, method: Method.PUT, url, ...(data && data) };
+        return await this.sendRequest<T>(config);
     }
 
     /**
      * Convenient wrapper around the `sendRequest` method for DELETE requests
      * @param url URL for request
-     * @param config AxiosRequestConfig object
+     * @param config optional AxiosRequestConfig object
      */
     public async delete<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-        return await this.sendRequest<T>(Method.DELETE, url, config);
+        config = { ...config, method: Method.DELETE, url };
+        return await this.sendRequest<T>(config);
     }
 
     /**
      * Convenient wrapper around the `sendRequest` method for HEAD requests
      * @param url URL for request
-     * @param config AxiosRequestConfig object
+     * @param config optional AxiosRequestConfig object
      */
     public async head<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-        return await this.sendRequest<T>(Method.HEAD, url, config);
+        config = { ...config, method: Method.HEAD, url };
+        return await this.sendRequest<T>(config);
     }
 
     /**
      * Method to build http requests
-     * @param method HTTP method for request
-     * @param url URL for request
      * @param config AxiosRequestConfig object
      */
     // This method exists so that we can keep the sendRequest method private for safety,
     // hides the `requestHash` param of sendRequest as that is only for internal use
-    public async request<T>(method: Method, url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-        return await this.sendRequest<T>(method, url, config);
+    public async request<T>(config: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+        return await this.sendRequest<T>(config);
     }
 
     /**
      * Send a request to specified URL using axios. Handles digest-authentication-enabled endpoints,
      * as well as both immediate and exponentially backed-off retries for (configurable) HTTP error status codes.
-     * @param method HTTP method of request
-     * @param url URL for request
      * @param config AxiosRequestConfig object
      */
-    private async sendRequest<T>(
-        method: Method,
-        url: string,
-        config?: AxiosRequestConfig,
-        requestHash?: string,
-    ): Promise<AxiosResponse<T>> {
+    private async sendRequest<T>(config?: AxiosRequestConfig, requestHash?: string): Promise<AxiosResponse<T>> {
         if (!requestHash) {
             requestHash = getUniqueRequestHash();
             this.retryAttempts[requestHash] = { count: 0, hasRetried401: false };
         }
-        const conf: AxiosRequestConfig = { method, url, ...config };
 
         try {
-            return await this.axios.request<T>(conf);
+            return await this.axios.request<T>(config);
         } catch (e: any) {
             const err = e as AxiosError;
             if (!err.isAxiosError) throw e;
@@ -166,7 +159,7 @@ export class AxiosDigest {
             ) {
                 this.retryAttempts[requestHash] = { count: 1, hasRetried401: true };
                 const newConfig = this.getAuthHeadersConfig(err.response, this.retryAttempts[requestHash].count);
-                return await this.sendRequest(method, url, newConfig, requestHash);
+                return await this.sendRequest(newConfig, requestHash);
             }
 
             if (
@@ -181,7 +174,7 @@ export class AxiosDigest {
                     );
                 }
                 this.retryAttempts[requestHash].count += 1;
-                return await this.sendRequest(method, url, config, requestHash);
+                return await this.sendRequest(config, requestHash);
             }
             delete this.retryAttempts[requestHash];
             throw err;

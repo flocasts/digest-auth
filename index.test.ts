@@ -11,6 +11,7 @@ describe('Axios Digest Tests', () => {
                 const axiosDigest = new DigestAuth('test', 'test', axios.create());
                 const res = await axiosDigest.get(URL_md5);
                 expect(res).toBeDefined();
+                expect(res.status).toEqual(200);
             });
             it('should fail with incorrect password', async () => {
                 expect(async () => {
@@ -30,6 +31,7 @@ describe('Axios Digest Tests', () => {
                 const axiosDigest = new DigestAuth('test', 'test', axios.create());
                 const res = await axiosDigest.post(URL_md5, { test: true });
                 expect(res).toBeDefined();
+                expect(res.status).toEqual(200);
             });
             it('should fail with incorrect password', async () => {
                 expect(async () => {
@@ -49,6 +51,7 @@ describe('Axios Digest Tests', () => {
                 const axiosDigest = new DigestAuth('test', 'test', axios.create());
                 const res = await axiosDigest.patch(URL_md5, { test: true });
                 expect(res).toBeDefined();
+                expect(res.status).toEqual(200);
             });
             it('should fail with incorrect password', async () => {
                 expect(async () => {
@@ -68,6 +71,7 @@ describe('Axios Digest Tests', () => {
                 const axiosDigest = new DigestAuth('test', 'test', axios.create());
                 const res = await axiosDigest.put(URL_md5, { test: true });
                 expect(res).toBeDefined();
+                expect(res.status).toEqual(200);
             });
             it('should fail with incorrect password', async () => {
                 expect(async () => {
@@ -87,6 +91,7 @@ describe('Axios Digest Tests', () => {
                 const axiosDigest = new DigestAuth('test', 'test', axios.create());
                 const res = await axiosDigest.delete(URL_md5);
                 expect(res).toBeDefined();
+                expect(res.status).toEqual(200);
             });
             it('should fail with incorrect password', async () => {
                 expect(async () => {
@@ -106,6 +111,7 @@ describe('Axios Digest Tests', () => {
                 const axiosDigest = new DigestAuth('test', 'test', axios.create());
                 const res = await axiosDigest.head(URL_md5);
                 expect(res).toBeDefined();
+                expect(res.status).toEqual(200);
             });
             it('should fail with incorrect password', async () => {
                 expect(async () => {
@@ -127,6 +133,7 @@ describe('Axios Digest Tests', () => {
                 const axiosDigest = new DigestAuth('test', 'test', axios.create());
                 const res = await axiosDigest.get(URL_md5Sess);
                 expect(res).toBeDefined();
+                expect(res.status).toEqual(200);
             });
             it('should fail with incorrect password', async () => {
                 expect(async () => {
@@ -146,6 +153,7 @@ describe('Axios Digest Tests', () => {
                 const axiosDigest = new DigestAuth('test', 'test', axios.create());
                 const res = await axiosDigest.post(URL_md5Sess, { test: true });
                 expect(res).toBeDefined();
+                expect(res.status).toEqual(200);
             });
             it('should fail with incorrect password', async () => {
                 expect(async () => {
@@ -165,6 +173,7 @@ describe('Axios Digest Tests', () => {
                 const axiosDigest = new DigestAuth('test', 'test', axios.create());
                 const res = await axiosDigest.patch(URL_md5Sess, { test: true });
                 expect(res).toBeDefined();
+                expect(res.status).toEqual(200);
             });
             it('should fail with incorrect password', async () => {
                 expect(async () => {
@@ -184,6 +193,7 @@ describe('Axios Digest Tests', () => {
                 const axiosDigest = new DigestAuth('test', 'test', axios.create());
                 const res = await axiosDigest.put(URL_md5Sess, { test: true });
                 expect(res).toBeDefined();
+                expect(res.status).toEqual(200);
             });
             it('should fail with incorrect password', async () => {
                 expect(async () => {
@@ -203,6 +213,7 @@ describe('Axios Digest Tests', () => {
                 const axiosDigest = new DigestAuth('test', 'test', axios.create());
                 const res = await axiosDigest.delete(URL_md5Sess);
                 expect(res).toBeDefined();
+                expect(res.status).toEqual(200);
             });
             it('should fail with incorrect password', async () => {
                 expect(async () => {
@@ -222,6 +233,7 @@ describe('Axios Digest Tests', () => {
                 const axiosDigest = new DigestAuth('test', 'test', axios.create());
                 const res = await axiosDigest.head(URL_md5Sess);
                 expect(res).toBeDefined();
+                expect(res.status).toEqual(200);
             });
             it('should fail with incorrect password', async () => {
                 expect(async () => {

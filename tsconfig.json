@@ -11,5 +11,5 @@
         "noUnusedLocals": true,
         "noUnusedParameters": true
     },
-    "include": ["src", "index.ts", "index.test.ts"]
+    "include": ["src", "index.ts"]
 }

@@ -1,16 +1,16 @@
-# Flo Digest Authentication Helper For Axios
+# Digest Authentication Helper For Axios
 
 This repo exists because the axios library does not support digest authentication.
 
 ## Installation
 
-`npm i @flocasts/flo-headers`
+`npm i @flocasts/axios-digest`
 
 ## Usage
 
 ```typescript
 import axios from 'axios';
-import DigestAuth from '@flocasts/flo-axios-digest';
+import DigestAuth from '@flocasts/axios-digest';
 
 const axiosDigest = new DigestAuth('<username>', '<passwd>', axios, {
     retry: true,

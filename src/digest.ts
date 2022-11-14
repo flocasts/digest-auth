@@ -58,7 +58,7 @@ export class AxiosDigest {
     }
 
     /**
-     * Convenient wrapper around the `sendRequest` method for GET requests
+     * Send a GET request using axios, with handling for possible digest authentication.s
      * @param url URL for request
      * @param config optional AxiosRequestConfig object
      */
@@ -68,7 +68,7 @@ export class AxiosDigest {
     }
 
     /**
-     * Convenient wrapper around the `sendRequest` method for POST requests
+     * Send a POST request using axios, with handling for possible digest authentication.
      * @param url URL for request
      * @param data optional data to send with request
      * @param config optional AxiosRequestConfig object
@@ -79,7 +79,7 @@ export class AxiosDigest {
     }
 
     /**
-     * Convenient wrapper around the `sendRequest` method for PATCH requests
+     * Send a PATCH request using axios, with handling for possible digest authentication.
      * @param url URL for request
      * @param data optional data to send with request
      * @param config optional AxiosRequestConfig object
@@ -90,7 +90,7 @@ export class AxiosDigest {
     }
 
     /**
-     * Convenient wrapper around the `sendRequest` method for PUT requests
+     * Send a PUT request using axios, with handling for possible digest authentication.
      * @param url URL for request
      * @param data optional data to send with request
      * @param config optional AxiosRequestConfig object
@@ -101,7 +101,7 @@ export class AxiosDigest {
     }
 
     /**
-     * Convenient wrapper around the `sendRequest` method for DELETE requests
+     * Send a DELETE request using axios, with handling for possible digest authentication.
      * @param url URL for request
      * @param config optional AxiosRequestConfig object
      */
@@ -111,7 +111,7 @@ export class AxiosDigest {
     }
 
     /**
-     * Convenient wrapper around the `sendRequest` method for HEAD requests
+     * Send a HEAD request using axios, with handling for possible digest authentication.
      * @param url URL for request
      * @param config optional AxiosRequestConfig object
      */
@@ -121,17 +121,16 @@ export class AxiosDigest {
     }
 
     /**
-     * Method to build http requests
+     * Send a request using axios, with handling for possible digest authentication.
      * @param config AxiosRequestConfig object
      */
-    // This method exists so that we can keep the sendRequest method private for safety,
-    // hides the `requestHash` param of sendRequest as that is only for internal use
+    //
     public async request<T>(config: AxiosRequestConfig): Promise<AxiosResponse<T>> {
         return await this.sendRequest<T>(config);
     }
 
     /**
-     * Send a request to specified URL using axios. Handles digest-authentication-enabled endpoints,
+     * Send a request to specified URL using axios. Handles digest-authentication enabled endpoints,
      * as well as both immediate and exponentially backed-off retries for (configurable) HTTP error status codes.
      * @param config AxiosRequestConfig object
      */

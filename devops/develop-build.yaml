@@ -1,4 +1,4 @@
-ssteps:
+steps:
     - name: node
       id: 'npm ci'
       entrypoint: npm

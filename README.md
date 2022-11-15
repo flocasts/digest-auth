@@ -43,7 +43,3 @@ npm run test
 -   [ ] [NestJs HTTPModule](https://docs.nestjs.com/techniques/http-module)
 -   [ ] [Fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch)
 -   [ ] [Ajax](https://developer.mozilla.org/en-US/docs/Web/Guide/AJAX/Getting_Started)
-
-## Help, something I need isn't supported!
-
-It's okay - PRs are open!

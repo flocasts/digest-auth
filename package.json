@@ -1,9 +1,9 @@
 {
     "name": "@flocasts/digest-auth",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "description": "This repo exists because the Axios library does not support digest authentication.",
     "authors": "Austin See <austin.see@flosports.tv>",
-    "private": false,
+    "private": true,
     "main": "dist/index.js",
     "repository": "https://github.com/flocasts/digest-auth",
     "engines": {
@@ -36,7 +36,7 @@
     "peerDependencies": {
         "axios": "^0.27.0"
     },
-    "license": "ISC",
+    "license": "MIT",
     "keywords": [
         "FloSports",
         "digest",

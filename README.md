@@ -22,6 +22,7 @@ const axiosDigest = new DigestAuth('<username>', '<passwd>', axios, {
         excludedStatusCodes: [404],
         exponentialBackoffMultiplier: 1000,
     },
+    timeout: 60 * 1000, // 1 minute
 });
 
 const result = await axiosDigest.get('http://localhost:3000/test');
@@ -29,8 +30,8 @@ const result = await axiosDigest.get('http://localhost:3000/test');
 
 ## Testing
 
-using the [concurrently](https://github.com/open-cli-tools/concurrently) package, we are able to spin up a test server to test our digest-auth solution, and close the test server on completion of tests.
-to test, simply run:
+Using the [concurrently](https://github.com/open-cli-tools/concurrently) package, we are able to spin up a test server to test our digest-auth solution, and close the test server on completion of tests.
+To test, simply run:
 
 ```bash
 npm run test

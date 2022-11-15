@@ -1,23 +1,26 @@
-# Digest Authentication Helper For Axios
+# Digest Authentication
 
 This repo exists because the axios library does not support digest authentication.
+Adding support for other HTTP clients is possible as well!
 
 ## Installation
 
-`npm i @flocasts/axios-digest`
+```bash
+npm i @flocasts/digest-auth
+```
 
-## Usage
+## Usage (with Axios)
 
 ```typescript
 import axios from 'axios';
-import DigestAuth from '@flocasts/axios-digest';
+import { AxiosDigest as DigestAuth } from '@flocasts/digest-auth';
 
 const axiosDigest = new DigestAuth('<username>', '<passwd>', axios, {
     retry: true,
     retryOptions: {
         attempts: 10,
         excludedStatusCodes: [404],
-        exponentialBackupMultiplier: 1000,
+        exponentialBackoffMultiplier: 1000,
     },
 });
 
@@ -33,17 +36,12 @@ to test, simply run:
 npm run test
 ```
 
-## Supported HTTP Methods
+## Supported HTTP Clients
 
--   [x] GET
--   [x] POST
--   [x] PATCH
--   [x] PUT
--   [x] DELETE
--   [x] HEAD
--   [ ] CONNECT
--   [ ] OPTIONS
--   [ ] TRACE
+-   [x] [Axios](https://axios-http.com/docs/intro)
+-   [ ] [NestJs HTTPModule](https://docs.nestjs.com/techniques/http-module)
+-   [ ] [Fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch)
+-   [ ] [Ajax](https://developer.mozilla.org/en-US/docs/Web/Guide/AJAX/Getting_Started)
 
 ## Help, something I need isn't supported!
 

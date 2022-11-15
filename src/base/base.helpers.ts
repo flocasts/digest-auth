@@ -1,12 +1,16 @@
-import { Algorithm, AuthDetails } from './digest.interface';
+import { Algorithm, AuthDetails } from './base.interface';
 import * as crypto from 'crypto';
 
 /**
  * Pause execution for ms milliseconds
- * @param ms Number of milliseconds to wait
+ * @param ms number of milliseconds to wait/sleep
  */
-export async function sleep(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+export async function sleep(ms: number): Promise<void> {
+    return new Promise((resolve) =>
+        setTimeout(() => {
+            resolve();
+        }, ms),
+    );
 }
 
 /**
@@ -35,7 +39,7 @@ export function getAuthDetails(header: string): AuthDetails {
  */
 export function getAlgorithm(algorithm: string): { algo: Algorithm; useSess: boolean } {
     const parts = algorithm?.toLowerCase().split('-');
-    return { algo: parts[0] as Algorithm, useSess: !!parts[1] };
+    return { algo: parts[0] as Algorithm, useSess: parts[1] && parts[1].toLowerCase() === 'sess' ? true : false };
 }
 
 /**
@@ -59,13 +63,13 @@ export function createHa1(
     cnonce: string,
 ): string {
     const { hash, encoding } = getHashBaseByAlgo(algo);
-
-    let ha1: string = hash.update(`${username}:${realm}:${password}`).digest(encoding);
-    if (useSess) {
-        ha1 = hash.update(`${ha1}:${nonce}:${cnonce}`).digest(encoding);
+    if (!useSess) {
+        return hash.update(`${username}:${realm}:${password}`).digest(encoding);
+    } else {
+        const body = hash.update(`${username}:${realm}:${password}`).digest(encoding);
+        const { hash: newHash } = getHashBaseByAlgo(algo);
+        return newHash.update(`${body}:${nonce}:${cnonce}`).digest(encoding);
     }
-
-    return ha1;
 }
 
 /**
@@ -77,17 +81,17 @@ export function createHa1(
  * @param data Any and all data being sent with this request
  * @returns Hex string result of hassing all necessary pararms
  */
-export function createHa2(algo: Algorithm, qop: string, method: string, path: string, data: string): string {
+export function createHa2(algo: Algorithm, qop: string, method: string, path: string, data: any): string {
     const { hash, encoding } = getHashBaseByAlgo(algo);
+    const stringData = JSON.stringify(data);
 
     if (qop === 'auth' || qop == undefined) {
         return hash.update(`${method}:${path}`).digest(encoding);
     } else if (qop === 'auth-int') {
-        const body: string = hash.update(`${JSON.stringify(data)}`).digest(encoding);
+        const body: string = hash.update(`${stringData}`).digest(encoding);
         return hash.update(`${method}:${path}:${body}`).digest(encoding);
-    } else {
-        throw new Error(`createHa2: Invalid 'qop' value: ${qop}`);
     }
+    throw new Error(`createHa2: Invalid 'qop' value: ${qop}`);
 }
 
 /**

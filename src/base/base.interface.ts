@@ -1,3 +1,13 @@
+import { AxiosInstance, AxiosStatic } from 'axios';
+
+/**
+ * Supported HTTP clients
+ */
+export interface HTTPClient {
+    axios: AxiosInstance | AxiosStatic;
+}
+export type SupportedHTTPClient = HTTPClient['axios'];
+
 /**
  * Supported HTTP methods
  */
@@ -17,6 +27,21 @@ export enum Algorithm {
     MD5 = 'md5',
     SHA256 = 'sha256',
     SHA512 = 'sha512',
+}
+
+/**
+ * Shape of `www-authenticate` header object
+ */
+export interface AuthDetails {
+    realm: string;
+    nonce: string;
+    qop?: string;
+    algorithm?: Algorithm;
+    opaque?: string;
+    stale?: string;
+    domain?: string; // not implemented
+    charset?: string; // not implemented
+    userhash?: string; // not implemented
 }
 
 /**
@@ -56,19 +81,4 @@ export interface Options {
      * Max timeout duration for requests (can also be set on a per-request basis with AxiosRequestConfig)
      */
     timeout: number;
-}
-
-/**
- * Shape of `www-authenticate` header object
- */
-export interface AuthDetails {
-    realm: string;
-    nonce: string;
-    qop?: string;
-    algorithm?: Algorithm;
-    opaque?: string;
-    stale?: string;
-    domain?: string; // not implemented
-    charset?: string; // not implemented
-    userhash?: string; // not implemented
 }

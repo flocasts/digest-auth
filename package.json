@@ -1,11 +1,11 @@
 {
-    "name": "@flocasts/axios-digest",
+    "name": "@flocasts/digest-auth",
     "version": "0.1.0",
     "description": "This repo exists because the Axios library does not support digest authentication.",
     "authors": "Austin See <austin.see@flosports.tv>",
     "private": false,
     "main": "dist/index.js",
-    "repository": "https://github.com/flocasts/axios-digest",
+    "repository": "https://github.com/flocasts/digest-auth",
     "engines": {
         "node": "^16.17.0",
         "npm": "^8.15.0",
@@ -16,7 +16,7 @@
         "build:package": "npm run clean && tsc -p tsconfig.build.json",
         "clean": "rm -rf dist",
         "lint": "eslint --fix",
-        "test": "concurrently --kill-others \"node ./test-server/index.js\" \"npm run build && jest\"",
+        "test": "concurrently --kill-others \"node ./test/server/index.js\" \"npm run build && jest\"",
         "test:server": "node ./test-server/index.js",
         "semantic-release": "npx --no-install semantic-release"
     },
@@ -39,9 +39,9 @@
     "license": "ISC",
     "keywords": [
         "FloSports",
-        "axios",
-        "digest-auth",
-        "digest"
+        "digest",
+        "authentication",
+        "axios"
     ],
     "publishConfig": {
         "@flocasts:registry": "https://npm.pkg.github.com"

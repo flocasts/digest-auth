@@ -34,6 +34,7 @@ export enum Algorithm {
 
 /**
  * Shape of `www-authenticate` header object
+ * https://httpwg.org/specs/rfc9110.html#field.www-authenticate
  */
 export interface AuthDetails {
     realm: string;
@@ -72,7 +73,7 @@ export interface Options {
          */
         exponentialBackoffMultiplier?: number;
         /**
-         * A list of HTTP status codes that, when receieved in a response, will be retried with exponential backoff
+         * A list of HTTP status codes that, when received in a response, will be retried with an exponential backoff
          */
         exponentialBackoffEnabledStatusCodes?: number[];
     };

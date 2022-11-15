@@ -2,7 +2,6 @@ import { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { DigestBase } from '../base/base';
 import { getUniqueRequestHash } from '../base/base.helpers';
 import { HTTPClient, Method, Options } from '../base/base.interface';
-// import {} from 'timers/promises';
 
 export class AxiosDigest extends DigestBase {
     constructor(
@@ -100,7 +99,7 @@ export class AxiosDigest extends DigestBase {
 
         try {
             return await this.httpClient.request<T>(config);
-        } catch (e: any) {
+        } catch (e: unknown) {
             const err = e as AxiosError;
             if (!err.isAxiosError) throw e;
 
@@ -108,7 +107,7 @@ export class AxiosDigest extends DigestBase {
             const authHeader = err.response.headers['www-authenticate'];
 
             // Only retry 401 once to get digest auth header,
-            // 401 after the first attempt likely means incorrect username/passwrd
+            // 401 after the first attempt likely means incorrect username/password
             if (
                 statusCode === 401 &&
                 this.retryAttempts[requestHash].count === 0 &&

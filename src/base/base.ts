@@ -1,6 +1,16 @@
 import { Options, Method, SupportedHTTPClient } from './base.interface';
-import { getAuthDetails, createDigestResponse, createHa1, createHa2, getAlgorithm, sleep } from './base.helpers';
+import {
+    getAuthDetails,
+    createDigestResponse,
+    createHa1,
+    createHa2,
+    getAlgorithm,
+    sleep,
+    decimalToHex,
+} from './base.helpers';
 import { URL } from 'url';
+
+const CNONCE_LENGTH = 16;
 
 export abstract class DigestBase {
     protected readonly httpClient: SupportedHTTPClient;
@@ -8,7 +18,7 @@ export abstract class DigestBase {
     protected readonly password: string;
     protected readonly options: Options;
     /**
-     * This is used for keeping track of each requests attempts seperately,
+     * This is used for keeping track of each requests attempts separately,
      * in case we ever have multiple requests firing at the same time.
      * Not sure if it's 100% needed, but safety-first
      */
@@ -76,7 +86,8 @@ export abstract class DigestBase {
         const authDetails = getAuthDetails(digestHeader);
 
         const nonceCount = ('00000000' + attemptCount).slice(-8);
-        const cnonce = 'B1Spiule'; // seems to work with any hardcoded alphanumeric string of 8 chars ?
+        const cnonceInput: Uint16Array = crypto.getRandomValues(new Uint16Array(CNONCE_LENGTH));
+        const cnonce: string = Array.from(cnonceInput, decimalToHex).join('');
         const { algo, useSess } = getAlgorithm(authDetails['algorithm'] ?? authDetails['ALGORITHM'] ?? 'md5');
         const path = new URL(url).pathname;
 

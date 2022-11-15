@@ -1,6 +1,6 @@
 # Digest Authentication
 
-This repo exists because the axios library does not support digest authentication.
+This repo exists to add support for digest authentication when using the Axios HTTP client.
 Adding support for other HTTP clients is possible as well!
 
 ## Installation

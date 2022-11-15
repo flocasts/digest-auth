@@ -2,8 +2,12 @@ import axios, { AxiosError } from 'axios';
 import { AxiosDigest as DigestAuth } from '../index';
 
 enum URL {
+    // Algorithm endpoints
     MD5 = 'http://localhost:1337/md5',
     MD5_SESS = 'http://localhost:1337/md5-sess',
+    BAD_ALGO = 'http://localhost:1337/bad-algo',
+
+    // HTTP status code endpoints
     ERR_408 = 'http://localhost:1337/four-zero-eight',
     ERR_404 = 'http://localhost:1337/four-zero-four',
     ERR_504 = 'http://localhost:1337/five-zero-four',
@@ -270,6 +274,16 @@ describe('Axios Digest Tests', () => {
                     await axiosDigest.head(URL.MD5_SESS);
                 }).rejects.toThrow(AxiosError);
             });
+        });
+    });
+    describe('Bad Algorithm', () => {
+        it('should fail when bad algorithm value is supplied', async () => {
+            const axiosDigest = new DigestAuth('test', 'test', axios.create());
+            try {
+                await axiosDigest.get(URL.BAD_ALGO);
+            } catch (e: any) {
+                expect(e.message).toEqual("algorithm 'bad_algo' not supported");
+            }
         });
     });
 });

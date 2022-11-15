@@ -38,8 +38,21 @@ export function getAuthDetails(header: string): AuthDetails {
  * @returns Object containing the algorithm used, and whether or not the algorithm had `-sess` appended
  */
 export function getAlgorithm(algorithm: string): { algo: Algorithm; useSess: boolean } {
-    const parts = algorithm?.toLowerCase().split('-');
-    return { algo: parts[0] as Algorithm, useSess: parts[1] && parts[1].toLowerCase() === 'sess' ? true : false };
+    const [algo, session] = algorithm?.toLowerCase().split('-');
+
+    if (!Object.values(Algorithm).includes(algo as Algorithm)) {
+        // algo is not supported, throw error
+        throw new Error(`algorithm '${algo}' not supported`);
+    }
+
+    let useSess: boolean = false;
+    if (session && session.toLowerCase() === 'sess') {
+        useSess = true;
+    }
+    return {
+        algo: algo as Algorithm,
+        useSess,
+    };
 }
 
 /**

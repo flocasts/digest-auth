@@ -16,6 +16,12 @@ const init = () => {
         algorithm: 'MD5-sess',
     });
 
+    const badAlgo = auth.digest({
+        realm: 'users',
+        file: __dirname + '/users.htdigest',
+        algorithm: 'bad_algo',
+    });
+
     const cb = (req, res) => {
         return res.end(`Welcome to private area - ${req.user}!`);
     };
@@ -50,6 +56,9 @@ const init = () => {
             case '/md5-sess':
                 func = md5Sess.check(cb);
                 break;
+            case '/bad-algo':
+                func = badAlgo.check(cb);
+                break;
             case '/four-zero-eight':
                 func = handle408;
                 break;
@@ -61,14 +70,12 @@ const init = () => {
                 break;
             case '/get-count':
                 func = (req, res) => {
-                    // res.writeHead(200, { count: count });
                     res.write(`${count}`);
                     res.end();
                 };
                 break;
             case '/reset-count':
                 func = (req, res) => {
-                    // res.writeHead(200, { count: count });
                     count = 0;
                     res.write(`${count}`);
                     res.end();

@@ -6,6 +6,9 @@ import { AxiosInstance, AxiosStatic } from 'axios';
 export interface HTTPClient {
     axios: AxiosInstance | AxiosStatic;
 }
+/**
+ * Utility type for type-safe inheritance of the base digest class
+ */
 export type SupportedHTTPClient = HTTPClient['axios'];
 
 /**
@@ -39,9 +42,9 @@ export interface AuthDetails {
     algorithm?: Algorithm;
     opaque?: string;
     stale?: string;
-    domain?: string; // not implemented
-    charset?: string; // not implemented
-    userhash?: string; // not implemented
+    domain?: string; // not implemented, barely adopted by anything
+    charset?: string; // not implemented, barely adopted by anything
+    userhash?: string; // not implemented, barely adopted by anything
 }
 
 /**
@@ -78,7 +81,7 @@ export interface Options {
      */
     retry: boolean;
     /**
-     * Max timeout duration for requests (can also be set on a per-request basis with AxiosRequestConfig)
+     * Max timeout duration for requests
      */
     timeout: number;
 }

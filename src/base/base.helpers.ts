@@ -2,7 +2,7 @@ import { Algorithm, AuthDetails } from './base.interface';
 import * as crypto from 'crypto';
 
 /**
- * Pause execution for ms milliseconds
+ * Pause execution for specified length of time
  * @param ms number of milliseconds to wait/sleep
  */
 export async function sleep(ms: number): Promise<void> {
@@ -140,6 +140,10 @@ export function getHashBaseByAlgo(algo: Algorithm): { hash: crypto.Hash; encodin
     }
 }
 
+/**
+ * Create hash to keep track of different requests
+ * @returns hashed hex string, unique via Date.now().millis
+ */
 export function getUniqueRequestHash(): string {
     return crypto
         .createHash('sha256')

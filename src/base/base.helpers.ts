@@ -13,10 +13,6 @@ export async function sleep(ms: number): Promise<void> {
     );
 }
 
-export function decimalToHex(num: number): string {
-    return num.toString(16).padStart(2, '0');
-}
-
 /**
  * Parse and shape `www-authenticate` HTTP header into javascript object
  * @param header Value of `www-authenticate` HTTP header

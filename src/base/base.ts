@@ -1,16 +1,6 @@
 import { Options, Method, SupportedHTTPClient } from './base.interface';
-import {
-    getAuthDetails,
-    createDigestResponse,
-    createHa1,
-    createHa2,
-    getAlgorithm,
-    sleep,
-    decimalToHex,
-} from './base.helpers';
+import { getAuthDetails, createDigestResponse, createHa1, createHa2, getAlgorithm, sleep } from './base.helpers';
 import { URL } from 'url';
-
-const CNONCE_LENGTH = 16;
 
 export abstract class DigestBase {
     protected readonly httpClient: SupportedHTTPClient;
@@ -86,8 +76,7 @@ export abstract class DigestBase {
         const authDetails = getAuthDetails(digestHeader);
 
         const nonceCount = ('00000000' + attemptCount).slice(-8);
-        const cnonceInput: Uint16Array = crypto.getRandomValues(new Uint16Array(CNONCE_LENGTH));
-        const cnonce: string = Array.from(cnonceInput, decimalToHex).join('');
+        const cnonce = 'B1Spiule'; // seems to work with any hardcoded alphanumeric string of 8 chars ?
         const { algo, useSess } = getAlgorithm(authDetails['algorithm'] ?? authDetails['ALGORITHM'] ?? 'md5');
         const path = new URL(url).pathname;
 

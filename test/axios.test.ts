@@ -2,8 +2,12 @@ import axios, { AxiosError } from 'axios';
 import { AxiosDigest as DigestAuth } from '../index';
 
 enum URL {
+    // Algorithm endpoints
     MD5 = 'http://localhost:1337/md5',
     MD5_SESS = 'http://localhost:1337/md5-sess',
+    BAD_ALGO = 'http://localhost:1337/bad-algo',
+
+    // HTTP status code endpoints
     ERR_408 = 'http://localhost:1337/four-zero-eight',
     ERR_404 = 'http://localhost:1337/four-zero-four',
     ERR_504 = 'http://localhost:1337/five-zero-four',

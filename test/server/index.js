@@ -17,6 +17,7 @@ const init = () => {
     });
 
     const cb = (req, res) => {
+        console.log(digestToJSON(req.headers['authorization']));
         return res.end(`Welcome to private area - ${req.user}!`);
     };
 
@@ -61,14 +62,12 @@ const init = () => {
                 break;
             case '/get-count':
                 func = (req, res) => {
-                    // res.writeHead(200, { count: count });
                     res.write(`${count}`);
                     res.end();
                 };
                 break;
             case '/reset-count':
                 func = (req, res) => {
-                    // res.writeHead(200, { count: count });
                     count = 0;
                     res.write(`${count}`);
                     res.end();

@@ -38,8 +38,21 @@ export function getAuthDetails(header: string): AuthDetails {
  * @returns Object containing the algorithm used, and whether or not the algorithm had `-sess` appended
  */
 export function getAlgorithm(algorithm: string): { algo: Algorithm; useSess: boolean } {
-    const parts = algorithm?.toLowerCase().split('-');
-    return { algo: parts[0] as Algorithm, useSess: parts[1] && parts[1].toLowerCase() === 'sess' ? true : false };
+    const [algo, session] = algorithm?.toLowerCase().split('-');
+
+    if (!Object.values(Algorithm).includes(algo as Algorithm)) {
+        // algo is not supported, throw error
+        throw new Error(`algorithm '${algo}' not supported`);
+    }
+
+    let useSess: boolean = false;
+    if (session && session.toLowerCase() === 'sess') {
+        useSess = true;
+    }
+    return {
+        algo: algo as Algorithm,
+        useSess,
+    };
 }
 
 /**
@@ -130,10 +143,6 @@ export function createDigestResponse(
  */
 export function getHashBaseByAlgo(algo: Algorithm): { hash: crypto.Hash; encoding: 'base64' | 'hex' } {
     switch (algo) {
-        case Algorithm.SHA256:
-            return { hash: crypto.createHash('sha256'), encoding: 'base64' };
-        case Algorithm.SHA512:
-            return { hash: crypto.createHash('sha512'), encoding: 'base64' };
         case Algorithm.MD5:
         default:
             return { hash: crypto.createHash('md5'), encoding: 'hex' };
@@ -149,4 +158,13 @@ export function getUniqueRequestHash(): string {
         .createHash('sha256')
         .update(`${+Date.now()}`)
         .digest('hex');
+}
+
+export function getUniqueCnonce(): string {
+    const input: Buffer = crypto.randomBytes(4);
+    return Array.from(input, decimalToHex).join('');
+}
+
+export function decimalToHex(num: number): string {
+    return num.toString(16).padStart(2, '0');
 }

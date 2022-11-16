@@ -134,7 +134,7 @@ export class AxiosDigest extends DigestBase {
                 return await this.sendRequest(newConfig, requestHash);
             }
 
-            // whether or not digest-auth happened, handle retries based on
+            // whether or not digest-auth happened, handle retries if applicable
             await this.handleRetry(config, err, statusCode, requestHash);
         }
     }

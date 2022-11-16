@@ -143,10 +143,6 @@ export function createDigestResponse(
  */
 export function getHashBaseByAlgo(algo: Algorithm): { hash: crypto.Hash; encoding: 'base64' | 'hex' } {
     switch (algo) {
-        case Algorithm.SHA256:
-            return { hash: crypto.createHash('sha256'), encoding: 'base64' };
-        case Algorithm.SHA512:
-            return { hash: crypto.createHash('sha512'), encoding: 'base64' };
         case Algorithm.MD5:
         default:
             return { hash: crypto.createHash('md5'), encoding: 'hex' };

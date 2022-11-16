@@ -16,13 +16,8 @@ const init = () => {
         algorithm: 'MD5-sess',
     });
 
-    const badAlgo = auth.digest({
-        realm: 'users',
-        file: __dirname + '/users.htdigest',
-        algorithm: 'bad_algo',
-    });
-
     const cb = (req, res) => {
+        console.log(digestToJSON(req.headers['authorization']));
         return res.end(`Welcome to private area - ${req.user}!`);
     };
 
@@ -55,9 +50,6 @@ const init = () => {
         switch (req.url) {
             case '/md5-sess':
                 func = md5Sess.check(cb);
-                break;
-            case '/bad-algo':
-                func = badAlgo.check(cb);
                 break;
             case '/four-zero-eight':
                 func = handle408;

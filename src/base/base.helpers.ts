@@ -163,3 +163,12 @@ export function getUniqueRequestHash(): string {
         .update(`${+Date.now()}`)
         .digest('hex');
 }
+
+export function getUniqueCnonce(): string {
+    const input: Buffer = crypto.randomBytes(4);
+    return Array.from(input, decimalToHex).join('');
+}
+
+export function decimalToHex(num: number): string {
+    return num.toString(16).padStart(2, '0');
+}

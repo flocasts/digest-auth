@@ -1,5 +1,13 @@
 import { Options, Method, SupportedHTTPClient } from './base.interface';
-import { getAuthDetails, createDigestResponse, createHa1, createHa2, getAlgorithm, sleep } from './base.helpers';
+import {
+    getAuthDetails,
+    createDigestResponse,
+    createHa1,
+    createHa2,
+    getAlgorithm,
+    sleep,
+    getUniqueCnonce,
+} from './base.helpers';
 import { URL } from 'url';
 
 export abstract class DigestBase {
@@ -12,7 +20,7 @@ export abstract class DigestBase {
      * in case we ever have multiple requests firing at the same time.
      * Not sure if it's 100% needed, but safety-first
      */
-    protected retryAttempts: Map<string, { count: number; hasRetried401: boolean }>;
+    protected requests: Map<string, { retryCount: number; digest?: { hasRetried401: boolean; cnonce: string } }>;
 
     private readonly defaultOptions: Options = {
         retry: false,
@@ -34,7 +42,7 @@ export abstract class DigestBase {
         this.httpClient = httpClientInstance;
         this.username = username;
         this.password = password;
-        this.retryAttempts = new Map();
+        this.requests = new Map();
         // this is a bit ugly but better safe than sorry when it comes to shallow merges
         this.options = options
             ? {
@@ -64,6 +72,8 @@ export abstract class DigestBase {
      * @param method HTTP method for request
      * @param digestHeader `www-authenticate` header returned from server using digest authentication.
      * @param attemptCount number of attempts this request has made
+     * @param data any data to be sent with the request
+     * @param requestHash unique hash string to keep track of different requests
      * @optional any data being sent with the request
      */
     protected getAuthHeader(
@@ -72,11 +82,14 @@ export abstract class DigestBase {
         digestHeader: string,
         attemptCount: number,
         data?: any,
+        requestHash?: string,
     ): string {
         const authDetails = getAuthDetails(digestHeader);
 
         const nonceCount = ('00000000' + attemptCount).slice(-8);
-        const cnonce = 'B1Spiule'; // seems to work with any hardcoded alphanumeric string of 8 chars ?
+
+        const cnonce = this.requests[requestHash].digest?.cnonce ?? getUniqueCnonce();
+
         const { algo, useSess } = getAlgorithm(authDetails['algorithm'] ?? authDetails['ALGORITHM'] ?? 'md5');
         const path = new URL(url).pathname;
 
@@ -112,18 +125,18 @@ export abstract class DigestBase {
             this.options.retry &&
             !this.options.retryOptions.excludedStatusCodes.includes(statusCode) &&
             // attempts - 1 because zero indexing
-            this.retryAttempts[requestHash].count < this.options.retryOptions.attempts - 1
+            this.requests[requestHash].retryCount < this.options.retryOptions.attempts - 1
         ) {
             // check if we should use exponential-backoff, and sleep if needed
             if (this.options.retryOptions.exponentialBackoffEnabledStatusCodes.includes(statusCode)) {
                 const sleepDelay =
-                    this.retryAttempts[requestHash].count * this.options.retryOptions.exponentialBackoffMultiplier;
+                    this.requests[requestHash].retryCount * this.options.retryOptions.exponentialBackoffMultiplier;
                 await sleep(sleepDelay);
             }
-            this.retryAttempts[requestHash].count += 1;
+            this.requests[requestHash].retryCount += 1;
             return await this.sendRequest(config, requestHash);
         }
-        delete this.retryAttempts[requestHash];
+        delete this.requests[requestHash];
         throw err;
     }
 }

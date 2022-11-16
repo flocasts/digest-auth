@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "This repo exists because the Axios library does not support digest authentication.",
     "authors": "Austin See <austin.see@flosports.tv>",
-    "private": true,
+    "private": false,
     "main": "dist/index.js",
     "repository": "https://github.com/flocasts/digest-auth",
     "engines": {

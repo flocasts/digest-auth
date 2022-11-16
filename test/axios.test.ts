@@ -276,16 +276,6 @@ describe('Axios Digest Tests', () => {
             });
         });
     });
-    describe('Bad Algorithm', () => {
-        it('should fail when bad algorithm value is supplied', async () => {
-            const axiosDigest = new DigestAuth('test', 'test', axios.create());
-            try {
-                await axiosDigest.get(URL.BAD_ALGO);
-            } catch (e: any) {
-                expect(e.message).toEqual("algorithm 'bad_algo' not supported");
-            }
-        });
-    });
 });
 
 // These tests don't use digest authentication, but the package allows for requests

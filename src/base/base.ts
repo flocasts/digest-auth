@@ -8,7 +8,7 @@ export abstract class DigestBase {
     protected readonly password: string;
     protected readonly options: Options;
     /**
-     * This is used for keeping track of each requests attempts seperately,
+     * This is used for keeping track of each requests attempts separately,
      * in case we ever have multiple requests firing at the same time.
      * Not sure if it's 100% needed, but safety-first
      */

@@ -13,17 +13,9 @@ npm i @flocasts/digest-auth
 
 ```typescript
 import axios from 'axios';
-import { AxiosDigest as DigestAuth } from '@flocasts/digest-auth';
+import { AxiosDigest } from '@flocasts/digest-auth';
 
-const axiosDigest = new DigestAuth('<username>', '<passwd>', axios, {
-    retry: true,
-    retryOptions: {
-        attempts: 10,
-        excludedStatusCodes: [404],
-        exponentialBackoffMultiplier: 1000,
-    },
-    timeout: 60 * 1000, // 1 minute
-});
+const axiosDigest = new AxiosDigest('<username>', '<passwd>', axios);
 
 const result = await axiosDigest.get('http://localhost:3000/test');
 ```

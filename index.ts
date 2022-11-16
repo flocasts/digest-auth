@@ -1,1 +1,1 @@
-export { AxiosDigest, Options } from './src';
+export { AxiosDigest } from './src';

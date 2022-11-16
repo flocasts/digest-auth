@@ -1,11 +1,10 @@
-import { Options, Method, SupportedHTTPClient } from './base.interface';
+import { DigestRequestMap, Method, SupportedHTTPClient } from './base.interface';
 import {
     getAuthDetails,
     createDigestResponse,
     createHa1,
     createHa2,
     getAlgorithm,
-    sleep,
     getUniqueCnonce,
 } from './base.helpers';
 import { URL } from 'url';
@@ -14,46 +13,14 @@ export abstract class DigestBase {
     protected readonly httpClient: SupportedHTTPClient;
     protected readonly username: string;
     protected readonly password: string;
-    protected readonly options: Options;
-    /**
-     * This is used for keeping track of each requests attempts separately,
-     * in case we ever have multiple requests firing at the same time.
-     * Not sure if it's 100% needed, but safety-first
-     */
-    protected requests: Map<string, { retryCount: number; digest?: { hasRetried401: boolean; cnonce: string } }>;
+    // This is used for keeping track of each requests attempts separately, and stores the cnonce.
+    protected requests: DigestRequestMap;
 
-    private readonly defaultOptions: Options = {
-        retry: false,
-        retryOptions: {
-            attempts: 10,
-            excludedStatusCodes: [401],
-            exponentialBackoffMultiplier: 1000,
-            exponentialBackoffEnabledStatusCodes: [429, 503],
-        },
-        timeout: 60 * 1000, // 1 minute
-    };
-
-    constructor(
-        username: string,
-        password: string,
-        httpClientInstance: SupportedHTTPClient,
-        options?: Partial<Options>,
-    ) {
+    constructor(username: string, password: string, httpClientInstance: SupportedHTTPClient) {
         this.httpClient = httpClientInstance;
         this.username = username;
         this.password = password;
         this.requests = new Map();
-        // this is a bit ugly but better safe than sorry when it comes to shallow merges
-        this.options = options
-            ? {
-                  ...this.defaultOptions,
-                  ...options,
-                  retryOptions: {
-                      ...this.defaultOptions.retryOptions,
-                      ...options.retryOptions,
-                  },
-              }
-            : this.defaultOptions;
     }
 
     public abstract get(url: string, config?: unknown): Promise<unknown>;
@@ -74,7 +41,6 @@ export abstract class DigestBase {
      * @param attemptCount number of attempts this request has made
      * @param data any data to be sent with the request
      * @param requestHash unique hash string to keep track of different requests
-     * @optional any data being sent with the request
      */
     protected getAuthHeader(
         url: string,
@@ -88,7 +54,7 @@ export abstract class DigestBase {
 
         const nonceCount = ('00000000' + attemptCount).slice(-8);
 
-        const cnonce = this.requests[requestHash].digest?.cnonce ?? getUniqueCnonce();
+        const cnonce: string = this.requests[requestHash].cnonce ?? getUniqueCnonce();
 
         const { algo, useSess } = getAlgorithm(authDetails['algorithm'] ?? authDetails['ALGORITHM'] ?? 'md5');
         const path = new URL(url).pathname;
@@ -120,23 +86,12 @@ export abstract class DigestBase {
         return authorization;
     }
 
-    protected async handleRetry(config: Record<string, any>, err: unknown, statusCode: number, requestHash: string) {
-        if (
-            this.options.retry &&
-            !this.options.retryOptions.excludedStatusCodes.includes(statusCode) &&
-            // attempts - 1 because zero indexing
-            this.requests[requestHash].retryCount < this.options.retryOptions.attempts - 1
-        ) {
-            // check if we should use exponential-backoff, and sleep if needed
-            if (this.options.retryOptions.exponentialBackoffEnabledStatusCodes.includes(statusCode)) {
-                const sleepDelay =
-                    this.requests[requestHash].retryCount * this.options.retryOptions.exponentialBackoffMultiplier;
-                await sleep(sleepDelay);
-            }
-            this.requests[requestHash].retryCount += 1;
-            return await this.sendRequest(config, requestHash);
-        }
-        delete this.requests[requestHash];
-        throw err;
+    protected shouldRetry401(statusCode: number, requestHash: string, authHeader: string): boolean {
+        return (
+            statusCode === 401 &&
+            this.requests[requestHash].retryCount === 0 &&
+            !this.requests[requestHash].hasRetried401 &&
+            authHeader.includes('nonce')
+        );
     }
 }

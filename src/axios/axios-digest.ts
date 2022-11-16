@@ -1,16 +1,11 @@
 import { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { DigestBase } from '../base/base';
 import { getUniqueCnonce, getUniqueRequestHash } from '../base/base.helpers';
-import { HTTPClient, Method, Options } from '../base/base.interface';
+import { DigestRequest, HTTPClient, Method } from '../base/base.interface';
 
 export class AxiosDigest extends DigestBase {
-    constructor(
-        username: string,
-        password: string,
-        httpClientInstance: HTTPClient['axios'],
-        options?: Partial<Options>,
-    ) {
-        super(username, password, httpClientInstance, options);
+    constructor(username: string, password: string, httpClientInstance: HTTPClient['axios']) {
+        super(username, password, httpClientInstance);
     }
 
     /**
@@ -95,7 +90,11 @@ export class AxiosDigest extends DigestBase {
     protected async sendRequest<T>(config?: AxiosRequestConfig, requestHash?: string): Promise<AxiosResponse<T>> {
         if (!requestHash) {
             requestHash = getUniqueRequestHash();
-            this.requests[requestHash] = { retryCount: 0, digest: { hasRetried401: false, cnonce: getUniqueCnonce() } };
+            this.requests[requestHash] = {
+                retryCount: 0,
+                hasRetried401: false,
+                cnonce: getUniqueCnonce(),
+            } as DigestRequest;
         }
 
         try {
@@ -109,33 +108,30 @@ export class AxiosDigest extends DigestBase {
 
             // Only retry 401 once to get digest auth header,
             // 401 after the first attempt likely means incorrect username/password
-            if (
-                statusCode === 401 &&
-                this.requests[requestHash].retryCount === 0 &&
-                !this.requests[requestHash].digest.hasRetried401 &&
-                authHeader.includes('nonce')
-            ) {
-                this.requests[requestHash] = {
-                    retryCount: 1,
-                    digest: { ...this.requests[requestHash].digest, hasRetried401: true },
-                };
-                const newAuthHeader = this.getAuthHeader(
-                    config.url,
-                    config.method as Method,
-                    err.response.headers['www-authenticate'],
-                    this.requests[requestHash].retryCount,
-                    config.data,
-                    requestHash,
-                );
-                const newConfig: AxiosRequestConfig = {
-                    ...config,
-                    headers: { ...config.headers, authorization: newAuthHeader },
-                };
-                return await this.sendRequest(newConfig, requestHash);
+
+            if (!this.shouldRetry401(statusCode, requestHash, authHeader)) {
+                delete this.requests[requestHash];
+                throw err;
             }
 
-            // whether or not digest-auth happened, handle retries if applicable
-            await this.handleRetry(config, err, statusCode, requestHash);
+            this.requests[requestHash] = {
+                ...this.requests[requestHash],
+                retryCount: 1,
+                hasRetried401: true,
+            };
+            const newAuthHeader = this.getAuthHeader(
+                config.url,
+                config.method as Method,
+                err.response.headers['www-authenticate'],
+                this.requests[requestHash].retryCount,
+                config.data,
+                requestHash,
+            );
+            const newConfig: AxiosRequestConfig = {
+                ...config,
+                headers: { ...config.headers, authorization: newAuthHeader },
+            };
+            return await this.sendRequest(newConfig, requestHash);
         }
     }
 }

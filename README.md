@@ -37,6 +37,15 @@ To test, simply run:
 npm run test
 ```
 
+## Supported Digest Algorithms
+
+If the server your request is sent to uses an algorithm not supported, you will receive the error:
+`algorithm '<algorithm>' not supported`
+
+-   [x] MD5
+-   [ ] sha256
+-   [ ] sha512
+
 ## Supported HTTP Clients
 
 -   [x] [Axios](https://axios-http.com/docs/intro)

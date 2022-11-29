@@ -20,16 +20,19 @@ export async function sleep(ms: number): Promise<void> {
  */
 export function getAuthDetails(header: string): AuthDetails {
     const withoutDigestKeyword = header.replace('Digest ', '');
-    let authDetailsString = withoutDigestKeyword
-        .replace(/{|}/g, '')
-        .split(',')
+    const parts = withoutDigestKeyword.split(', ');
+    const res = parts
         .map((val) => {
-            const [key, value] = val.split('=');
-            return `"${key.trim()}":${value}`;
+            let [key, value] = val.split('"');
+            if (val.includes('algorithm') && !val.endsWith('"')) {
+                [key, value] = val.split('=');
+            } else {
+            }
+            return `"${key.replace('=', '')}":"${value}"`;
         })
         .join(',');
-    authDetailsString = `{${authDetailsString}}`;
-    return JSON.parse(authDetailsString);
+    console.log(`{${res}}`);
+    return JSON.parse(`{${res}}`);
 }
 
 /**

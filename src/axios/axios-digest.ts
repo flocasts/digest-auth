@@ -102,7 +102,10 @@ export class AxiosDigest extends DigestBase {
             return await this.httpClient.request<T>(config);
         } catch (e: unknown) {
             const err = e as AxiosError;
-            if (!err.isAxiosError) throw e;
+            if (!err.isAxiosError) {
+                console.log('error from digest-auth (!e.isAxiosError): ', e);
+                throw e;
+            }
 
             const statusCode = err.response.status;
             const authHeader = err.response.headers['www-authenticate'];

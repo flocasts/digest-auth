@@ -31,7 +31,6 @@ export function getAuthDetails(header: string): AuthDetails {
             return `"${key.replace('=', '')}":"${value}"`;
         })
         .join(',');
-    console.log(`{${res}}`);
     return JSON.parse(`{${res}}`);
 }
 

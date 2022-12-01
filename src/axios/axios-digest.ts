@@ -10,74 +10,75 @@ export class AxiosDigest extends DigestBase {
 
     /**
      * Send a GET request using axios, with handling for possible digest authentication
-     * @param url URL for request
+     * @param path path to endpoint on server
      * @param config optional AxiosRequestConfig object
      */
-    public async get<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-        config = { ...config, method: Method.GET, url };
+    public async get<T>(path: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+        config = { ...config, method: Method.GET, url: path };
         return await this.sendRequest(config);
     }
 
     /**
      * Send a POST request using axios, with handling for possible digest authentication.
-     * @param url URL for request
+     * @param path path to endpoint on server
      * @param data optional data to send with request
      * @param config optional AxiosRequestConfig object
      */
-    public async post<D, T>(url: string, data?: D, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-        config = { ...config, method: Method.POST, url, ...(data && data) };
+    public async post<D, T>(path: string, data?: D, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+        config = { ...config, method: Method.POST, url: path, ...(data && data) };
         return await this.sendRequest<T>(config);
     }
 
     /**
      * Send a PATCH request using axios, with handling for possible digest authentication.
-     * @param url URL for request
+     * @param path path to endpoint on server
      * @param data optional data to send with request
      * @param config optional AxiosRequestConfig object
      */
-    public async patch<D, T>(url: string, data?: D, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-        config = { ...config, method: Method.PATCH, url, ...(data && data) };
+    public async patch<D, T>(path: string, data?: D, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+        config = { ...config, method: Method.PATCH, url: path, ...(data && data) };
         return await this.sendRequest<T>(config);
     }
 
     /**
      * Send a PUT request using axios, with handling for possible digest authentication.
-     * @param url URL for request
+     * @param path path to endpoint on server
      * @param data optional data to send with request
      * @param config optional AxiosRequestConfig object
      */
-    public async put<D, T>(url: string, data?: D, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-        config = { ...config, method: Method.PUT, url, ...(data && data) };
+    public async put<D, T>(path: string, data?: D, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+        config = { ...config, method: Method.PUT, url: path, ...(data && data) };
         return await this.sendRequest<T>(config);
     }
 
     /**
      * Send a DELETE request using axios, with handling for possible digest authentication.
-     * @param url URL for request
+     * @param path path to endpoint on server
      * @param config optional AxiosRequestConfig object
      */
-    public async delete<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-        config = { ...config, method: Method.DELETE, url };
+    public async delete<T>(path: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+        config = { ...config, method: Method.DELETE, url: path };
         return await this.sendRequest<T>(config);
     }
 
     /**
      * Send a HEAD request using axios, with handling for possible digest authentication.
-     * @param url URL for request
+     * @param path path to endpoint on server
      * @param config optional AxiosRequestConfig object
      */
-    public async head<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-        config = { ...config, method: Method.HEAD, url };
+    public async head<T>(path: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+        config = { ...config, method: Method.HEAD, url: path };
         return await this.sendRequest<T>(config);
     }
 
     /**
      * Send a request using axios, with handling for possible digest authentication.
+     * @param path path to endpoint on server
      * @param config AxiosRequestConfig object
      */
     //
-    public async request<D, T>(url: string, config: AxiosRequestConfig, data?: D): Promise<AxiosResponse<T>> {
-        config = { ...config, url, data };
+    public async request<D, T>(path: string, config: AxiosRequestConfig, data?: D): Promise<AxiosResponse<T>> {
+        config = { ...config, url: path, data };
         return await this.sendRequest<T>(config);
     }
 
@@ -120,11 +121,9 @@ export class AxiosDigest extends DigestBase {
                 hasRetried401: true,
             };
             const newAuthHeader = this.getAuthHeader(
-                config.url,
-                config.method as Method,
+                config,
                 err.response.headers['www-authenticate'],
                 this.requests[requestHash].retryCount,
-                config.data,
                 requestHash,
             );
             const newConfig: AxiosRequestConfig = {

@@ -1,4 +1,4 @@
-import { DigestRequestMap, Method, SupportedHTTPClient } from './base.interface';
+import { DigestRequestMap, SupportedHTTPClient } from './base.interface';
 import {
     getAuthDetails,
     createDigestResponse,
@@ -8,6 +8,7 @@ import {
     getUniqueCnonce,
 } from './base.helpers';
 import { URL } from 'url';
+import { AxiosRequestConfig } from 'axios';
 
 export abstract class DigestBase {
     protected readonly httpClient: SupportedHTTPClient;
@@ -26,7 +27,6 @@ export abstract class DigestBase {
     public abstract get(url: string, config?: unknown): Promise<unknown>;
     public abstract post<D>(url: string, config?: unknown, data?: D): Promise<unknown>;
     public abstract put<D>(url: string, config?: unknown, data?: D): Promise<unknown>;
-    public abstract put<D>(url: string, config?: unknown, data?: D): Promise<unknown>;
     public abstract delete(url: string, config?: unknown): Promise<unknown>;
     public abstract head(url: string, config?: unknown): Promise<unknown>;
     public abstract request<D>(url: string, config: Record<string, any>, data?: D): Promise<unknown>;
@@ -43,11 +43,9 @@ export abstract class DigestBase {
      * @param requestHash unique hash string to keep track of different requests
      */
     protected getAuthHeader(
-        url: string,
-        method: Method,
+        config: AxiosRequestConfig<any>,
         digestHeader: string,
         attemptCount: number,
-        data?: any,
         requestHash?: string,
     ): string {
         const authDetails = getAuthDetails(digestHeader);
@@ -57,7 +55,15 @@ export abstract class DigestBase {
         const cnonce: string = this.requests[requestHash].cnonce ?? getUniqueCnonce();
 
         const { algo, useSess } = getAlgorithm(authDetails['algorithm'] ?? authDetails['ALGORITHM'] ?? 'md5');
-        const path = new URL(url).pathname;
+        let url: URL;
+        if (config.baseURL && config.url && !config.url.includes('http')) {
+            url = new URL(config.baseURL + config.url);
+        } else if (!config.baseURL) {
+            url = new URL(config.url);
+        } else if (!config.url) {
+            url = new URL(config.baseURL);
+        }
+        const path = url.pathname;
 
         const ha1 = createHa1(
             this.username,
@@ -68,7 +74,7 @@ export abstract class DigestBase {
             authDetails.nonce,
             cnonce,
         );
-        const ha2 = createHa2(algo, authDetails.qop, (method as string) ?? 'GET', path, data ?? '');
+        const ha2 = createHa2(algo, authDetails.qop, config.method ?? 'GET', path, config.data ?? '');
 
         const response = createDigestResponse(algo, ha1, ha2, authDetails.nonce, nonceCount, cnonce, authDetails.qop);
 

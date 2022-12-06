@@ -156,10 +156,7 @@ export function getHashBaseByAlgo(algo: Algorithm): { hash: crypto.Hash; encodin
  * @returns hashed hex string, unique via Date.now().millis
  */
 export function getUniqueRequestHash(): string {
-    return crypto
-        .createHash('sha256')
-        .update(`${+Date.now()}`)
-        .digest('hex');
+    return crypto.randomUUID();
 }
 
 export function getUniqueCnonce(): string {

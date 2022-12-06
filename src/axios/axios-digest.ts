@@ -102,9 +102,7 @@ export class AxiosDigest extends DigestBase {
             return await this.httpClient.request<T>(config);
         } catch (e: unknown) {
             const err = e as AxiosError;
-            if (!err.isAxiosError) {
-                throw new Error('error from digest-auth (!e.isAxiosError): ' + e);
-            }
+            if (!err.isAxiosError) throw e;
 
             const statusCode = err.response.status;
             const authHeader = err.response.headers['www-authenticate'];
@@ -114,7 +112,7 @@ export class AxiosDigest extends DigestBase {
 
             if (!this.shouldRetry401(statusCode, requestHash, authHeader)) {
                 delete this.requests[requestHash];
-                throw new Error('error from digest-auth (!shouldRetry401): ' + e);
+                throw err;
             }
 
             this.requests[requestHash] = {

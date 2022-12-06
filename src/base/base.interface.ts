@@ -30,14 +30,6 @@ export enum Algorithm {
     MD5 = 'md5',
 }
 
-export interface DigestRequest {
-    retryCount: number;
-    hasRetried401: boolean;
-    cnonce: string;
-}
-
-export type DigestRequestMap = Map<string, DigestRequest>;
-
 /**
  * Shape of `www-authenticate` header object
  * https://httpwg.org/specs/rfc9110.html#field.www-authenticate

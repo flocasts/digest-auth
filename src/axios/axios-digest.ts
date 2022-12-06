@@ -1,7 +1,6 @@
 import { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { DigestBase } from '../base/base';
-import { getUniqueCnonce, getUniqueRequestHash } from '../base/base.helpers';
-import { DigestRequest, HTTPClient, Method } from '../base/base.interface';
+import { HTTPClient, Method } from '../base/base.interface';
 
 export class AxiosDigest extends DigestBase {
     constructor(username: string, password: string, httpClientInstance: HTTPClient['axios']) {
@@ -88,16 +87,7 @@ export class AxiosDigest extends DigestBase {
      * @param config AxiosRequestConfig object
      * @param requestHash unique hash string to keep track of different requests
      */
-    protected async sendRequest<T>(config?: AxiosRequestConfig, requestHash?: string): Promise<AxiosResponse<T>> {
-        if (!requestHash) {
-            requestHash = getUniqueRequestHash();
-            this.requests[requestHash] = {
-                retryCount: 0,
-                hasRetried401: false,
-                cnonce: getUniqueCnonce(),
-            } as DigestRequest;
-        }
-
+    protected async sendRequest<T>(config: AxiosRequestConfig, isRetry401?: boolean): Promise<AxiosResponse<T>> {
         try {
             return await this.httpClient.request<T>(config);
         } catch (e: unknown) {
@@ -105,32 +95,18 @@ export class AxiosDigest extends DigestBase {
             if (!err.isAxiosError) throw e;
 
             const statusCode = err.response.status;
-            const authHeader = err.response.headers['www-authenticate'];
-
             // Only retry 401 once to get digest auth header,
             // 401 after the first attempt likely means incorrect username/password
-
-            if (!this.shouldRetry401(statusCode, requestHash, authHeader)) {
-                delete this.requests[requestHash];
+            if (statusCode !== 401 || isRetry401) {
                 throw err;
             }
 
-            this.requests[requestHash] = {
-                ...this.requests[requestHash],
-                retryCount: 1,
-                hasRetried401: true,
-            };
-            const newAuthHeader = this.getAuthHeader(
-                config,
-                err.response.headers['www-authenticate'],
-                this.requests[requestHash].retryCount,
-                requestHash,
-            );
+            const newAuthHeader = this.getAuthHeader(config, err.response.headers['www-authenticate'], 1);
             const newConfig: AxiosRequestConfig = {
                 ...config,
                 headers: { ...config.headers, authorization: newAuthHeader },
             };
-            return await this.sendRequest(newConfig, requestHash);
+            return await this.sendRequest(newConfig, true);
         }
     }
 }

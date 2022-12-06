@@ -1,4 +1,4 @@
-import { DigestRequestMap, SupportedHTTPClient } from './base.interface';
+import { SupportedHTTPClient } from './base.interface';
 import {
     getAuthDetails,
     createDigestResponse,
@@ -14,14 +14,11 @@ export abstract class DigestBase {
     protected readonly httpClient: SupportedHTTPClient;
     protected readonly username: string;
     protected readonly password: string;
-    // This is used for keeping track of each requests attempts separately, and stores the cnonce.
-    protected requests: DigestRequestMap;
 
     constructor(username: string, password: string, httpClientInstance: SupportedHTTPClient) {
         this.httpClient = httpClientInstance;
         this.username = username;
         this.password = password;
-        this.requests = new Map();
     }
 
     public abstract get(url: string, config?: unknown): Promise<unknown>;
@@ -30,7 +27,7 @@ export abstract class DigestBase {
     public abstract delete(url: string, config?: unknown): Promise<unknown>;
     public abstract head(url: string, config?: unknown): Promise<unknown>;
     public abstract request<D>(url: string, config: Record<string, any>, data?: D): Promise<unknown>;
-    protected abstract sendRequest(config?: Record<string, any>, requestHash?: string): Promise<unknown>;
+    protected abstract sendRequest(config: AxiosRequestConfig, isRetry401?: boolean): Promise<unknown>;
 
     /**
      * Parse `www-authenticate` header on requests to endpoints that use digest authentication,
@@ -42,17 +39,12 @@ export abstract class DigestBase {
      * @param data any data to be sent with the request
      * @param requestHash unique hash string to keep track of different requests
      */
-    protected getAuthHeader(
-        config: AxiosRequestConfig<any>,
-        digestHeader: string,
-        attemptCount: number,
-        requestHash?: string,
-    ): string {
+    protected getAuthHeader(config: AxiosRequestConfig<any>, digestHeader: string, attemptCount: number): string {
         const authDetails = getAuthDetails(digestHeader);
 
         const nonceCount = ('00000000' + attemptCount).slice(-8);
 
-        const cnonce: string = this.requests[requestHash].cnonce ?? getUniqueCnonce();
+        const cnonce: string = getUniqueCnonce();
 
         const { algo, useSess } = getAlgorithm(authDetails['algorithm'] ?? authDetails['ALGORITHM'] ?? 'md5');
         let url: URL;
@@ -90,14 +82,5 @@ export abstract class DigestBase {
         }
 
         return authorization;
-    }
-
-    protected shouldRetry401(statusCode: number, requestHash: string, authHeader: string): boolean {
-        return (
-            statusCode === 401 &&
-            this.requests[requestHash].retryCount === 0 &&
-            !this.requests[requestHash].hasRetried401 &&
-            authHeader.includes('nonce')
-        );
     }
 }

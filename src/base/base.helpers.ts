@@ -1,5 +1,6 @@
 import { Algorithm, AuthDetails } from './base.interface';
 import * as crypto from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Pause execution for specified length of time
@@ -156,7 +157,7 @@ export function getHashBaseByAlgo(algo: Algorithm): { hash: crypto.Hash; encodin
  * @returns hashed hex string, unique via Date.now().millis
  */
 export function getUniqueRequestHash(): string {
-    return crypto.randomUUID();
+    return uuidv4();
 }
 
 export function getUniqueCnonce(): string {

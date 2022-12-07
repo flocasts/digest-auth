@@ -95,7 +95,7 @@ export class AxiosDigest extends DigestBase {
             if (!err.isAxiosError) throw e;
 
             // If we for some reason cannot get the status code, just set to 0 so it will throw
-            const statusCode = err.status ?? err.response.status ?? 0;
+            const statusCode = err.response?.status ?? 0;
             // Only retry 401 once to get digest auth header,
             // 401 after the first attempt likely means incorrect username/password
             if (statusCode !== 401 || isRetry401) {

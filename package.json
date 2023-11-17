@@ -5,7 +5,9 @@
     "authors": "Austin See <austin.see@flosports.tv>",
     "private": false,
     "main": "dist/index.js",
-    "repository": "https://github.com/flocasts/digest-auth",
+    "repository": {
+        "url": "git+https://github.com/flocasts/digest-auth.git"
+    },
     "engines": {
         "node": "^18"
     },

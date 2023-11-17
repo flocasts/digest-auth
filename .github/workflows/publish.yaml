@@ -25,6 +25,8 @@ jobs:
                   node-version: '18.x'
                   registry-url: 'https://npm.pkg.github.com'
                   scope: '@flocasts'
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Install dependencies
               run: npm ci

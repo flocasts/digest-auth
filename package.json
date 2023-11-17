@@ -7,7 +7,7 @@
     "main": "dist/index.js",
     "repository": "https://github.com/flocasts/digest-auth",
     "engines": {
-        "node": "^19",
+        "node": "^18",
         "npm": "^8",
         "yarn": "please-use-npm"
     },

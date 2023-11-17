@@ -43,7 +43,7 @@ jobs:
                   # Update the version number in package.json
                   jq --indent 4 ".version=\"$newVersion\"" ./package.json > package.json
                   echo "Updated package.json version to $newVersion"
-                  echo $(jq -r package.json)
+                  cat package.json | jq
 
             - name: Publish to npm
               run: npm publish

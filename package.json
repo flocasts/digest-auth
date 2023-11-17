@@ -12,6 +12,7 @@
         "yarn": "please-use-npm"
     },
     "scripts": {
+        "prepublishOnly": "npm run build:package",
         "build": "npm run clean && tsc",
         "build:package": "npm run clean && tsc -p tsconfig.build.json",
         "clean": "rm -rf dist",

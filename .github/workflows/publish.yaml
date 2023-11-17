@@ -41,9 +41,8 @@ jobs:
                       exit 1
                   fi
                   # Update the version number in package.json
-                  jq --indent 4 ".version=\"$newVersion\"" ./package.json > package.json
+                  jq --indent 4 ".version=\"$newVersion\"" ./package.json > tmp.$$.json && mv tmp.$$.json package.json
                   echo "Updated package.json version to $newVersion"
-                  cat package.json | jq
 
             - name: Publish to npm
               run: npm publish

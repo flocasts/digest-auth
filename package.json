@@ -6,11 +6,6 @@
     "private": false,
     "main": "dist/index.js",
     "repository": "https://github.com/flocasts/digest-auth",
-    "engines": {
-        "node": "^18",
-        "npm": "^8",
-        "yarn": "please-use-npm"
-    },
     "scripts": {
         "prepublishOnly": "npm run build:package",
         "build": "npm run clean && tsc",

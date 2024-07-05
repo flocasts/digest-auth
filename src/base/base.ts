@@ -22,8 +22,8 @@ export abstract class DigestBase {
     }
 
     public abstract get(url: string, config?: unknown): Promise<unknown>;
-    public abstract post<D>(url: string, config?: unknown, data?: D): Promise<unknown>;
-    public abstract put<D>(url: string, config?: unknown, data?: D): Promise<unknown>;
+    public abstract post<D>(url: string, data?: D, config?: unknown ): Promise<unknown>;
+    public abstract put<D>(url: string, data?: D, config?: unknown): Promise<unknown>;
     public abstract delete(url: string, config?: unknown): Promise<unknown>;
     public abstract head(url: string, config?: unknown): Promise<unknown>;
     public abstract request<D>(url: string, config: Record<string, any>, data?: D): Promise<unknown>;

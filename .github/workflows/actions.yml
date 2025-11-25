@@ -1,0 +1,9 @@
+name: 'Auto Actions'
+on:
+  pull_request:
+    types: [opened, ready_for_review]
+
+jobs:
+  link-ticket:
+    name: Link Ticket
+    uses: flocasts/github-actions/.github/workflows/shared-link-ticket.yaml@main
